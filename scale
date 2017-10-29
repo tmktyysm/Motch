@@ -1,0 +1,90 @@
+##trainデータ
+racewiseFeature <-c("ave_st",
+                    "national_win",
+                    "national_2ren",
+                    "national_3ren",
+                    "local_win",
+                    "local_ren",
+                    "local_3ren",
+                    "motor_2ren",
+                    "motor_3ren",
+                    "boat_2ren",
+                    "boat_3ren",
+                    "course_win",
+                    "Course_1",
+                    "Course_2")
+
+splited.allData <- split(train,train$race_id)
+
+scaled.train <-  do.call("rbind",
+   lapply(splited.allData,
+     function(rw) {
+       data.frame(
+         race_id= rw$race_id,
+         course=rw$course,
+         number=rw$number,
+         rank=rw$rank,
+         age=rw$age,
+         motor_num=rw$motor_num,
+         boat_num=rw$boat_num,
+         scale(rw[,racewiseFeature]),
+         result=rw$result) #ここで正規化している
+     })
+  )
+ 
+ scaled.train<- scaled.train[,c(-1)]
+ scaled.train$number<- as.integer(scaled.train$number)
+ scaled.train$course<- as.integer(scaled.train$course)
+ scaled.train$motor_num<- as.integer(scaled.train$motor_num) 
+ scaled.train$boat_num<- as.integer(scaled.train$boat_num)
+ scaled.train$rank<- as.integer(scaled.train$rank)
+ scaled.train$result<- as.factor(scaled.train$result)
+ 
+ is.nan.df <- function(x) do.call(cbind, lapply(x, is.nan))
+ scaled.train[is.nan.df(scaled.train)] <- 0
+ 
+##testデータ
+racewiseFeature <-c("ave_st",
+                    "national_win",
+                    "national_2ren",
+                    "national_3ren",
+                    "local_win",
+                    "local_ren",
+                    "local_3ren",
+                    "motor_2ren",
+                    "motor_3ren",
+                    "boat_2ren",
+                    "boat_3ren",
+                    "course_win",
+                    "Course_1",
+                    "Course_2")
+
+splited.allData <- split(test,test$race_id)
+
+scaled.test <-  do.call("rbind",
+   lapply(splited.allData,
+     function(rw) {
+       data.frame(
+         race_id= rw$race_id,
+         course=rw$course,
+         number=rw$number,
+         rank=rw$rank,
+         age=rw$age,
+         motor_num=rw$motor_num,
+         boat_num=rw$boat_num,
+         scale(rw[,racewiseFeature]),
+         result=rw$result) #ここで正規化している
+     })
+  )
+ 
+ scaled.test<- scaled.test[,c(-1)]
+ scaled.test$number<- as.integer(scaled.test$number)
+ scaled.test$course<- as.integer(scaled.test$course)
+ scaled.test$motor_num<- as.integer(scaled.test$motor_num) 
+ scaled.test$boat_num<- as.integer(scaled.test$boat_num)
+ scaled.test$rank<- as.integer(scaled.test$rank)
+ scaled.test$result<- as.factor(scaled.test$result)
+ 
+ is.nan.df <- function(x) do.call(cbind, lapply(x, is.nan))
+ scaled.test[is.nan.df(scaled.test)] <- 0
+ scaled.test[is.na(scaled.test)] <- 0
