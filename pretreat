@@ -1,0 +1,56 @@
+##　integer をNumericに変換
+for (column in colnames(b)){
+  if (is.integer(b[,column])){
+    b[,column]<-
+      as.numeric(b[,column])
+  }
+}
+
+
+#欠損値処理
+total2_join[is.na(total2_join)] <- 0
+
+as.numeric(as.character(size)) ##factorをnumericに変換
+
+##dplyrの使い方
+require("dplyr")
+# select列の抽出
+a<- select(データセット名,列名)#削除の場合は-
+# rename列名の変更
+a<- rename(データセット名,列名＝別列名)
+#mutate新しい列の追加
+a<- mutate(データセット名,新列名＝導入条件)
+
+##行の操作
+# 町田駅のデータを選択
+> sagamihara.station.user %>%
++   dplyr::filter(station == "町田駅（参考）")
+# 横浜線の矢部駅のデータを選択( , で連結)　and条件
+> sagamihara.station.user %>%
++   dplyr::filter(trainline == "横浜線" , station == "矢部駅")
+# 横浜線の矢部駅のデータを選択( & で連結)　and条件
+> sagamihara.station.user %>%
++   dplyr::filter(trainline == "横浜線" & station == "矢部駅")
+# 横浜線と小田急線のデータを選択( | で連結)　or条件
+> sagamihara.station.user %>%
++   dplyr::filter(trainline == "横浜線" | trainline == "小田急線")
+
+##集計 summarise
+> sagamihara.station.user %>%
++   dplyr::summarise(max=max(year_2013) , min=min(year_2013) , mean=mean(year_2013))
+#複数の列の集計
+> sagamihara.station.user %>%
++   dplyr::summarise(max_2013=max(year_2013) , min_2013=min(year_2013) , mean_2013=mean(year_2013),
++                    max_2012=max(year_2012) , min_2012=min(year_2012) , mean_2012=mean(year_2012))
+##複数の列の集計　summarise_each 列数が多い場合には有効
+# 2012年、2013年のmax , min , meanを集計
+# 列名が元の列名+function名になるところが注意
+> sagamihara.station.user %>%
++   dplyr::summarise_each(funs(max , min ,mean) , year_2013 , year_2012)
+
+#データ書き出し
+write.table(table,"kyoutei_scray.csv", col.names = F, row.names = F)
+
+
+##factor level adjust
+x <- factor(x, levels=levels(y))
