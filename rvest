@@ -1,0 +1,55 @@
+require(rvest)
+
+##競艇resultデータ抽出
+library(rvest)
+library(pforeach)
+
+npforeach(i=1:12, .c=rbind)({
+  cat(i,"\n")
+  url<-sprintf("https://www.boatrace.jp/owpc/pc/race/raceresult?rno=%d&jcd=12&hd=20171008",i)
+  Sys.sleep(3)
+  html <- read_html(url)
+  li_nodes <- html %>% html_nodes(xpath='/html/body/main/div/div/div/div[2]/div[4]/div/div/table/tbody')
+  name <- li_nodes %>% html_nodes(xpath = "tr") %>% html_text %>% iconv("utf8", "cp932")
+  a<- data.frame(name=name[-(7:12)])
+})-> result
+write.csv(result,"result_suminoe_20171008.csv", row.names = F)
+
+##競艇出走データ抽出
+library(rvest)
+library(pforeach)
+
+npforeach(i=1:12, .c=rbind)({
+  cat(i,"\n")
+  url<- sprintf("https://www.boatrace.jp/owpc/pc/race/racelist?rno=%d&jcd=12&hd=20171008",i) ##%dを忘れないように
+  Sys.sleep(3)
+  html <- read_html(url)
+  r3<-html_table(html, fill=TRUE)
+  r3<-data.frame(r3)
+  r3<- r3[c(-2,-4,-5,-6,-8,-9,-10,-12,-13,-14,-16,-17,-18,-20,-21,-22, -24,-25,-26), ]
+  r3<- r3[,15:38]
+  r3<- r3[,c(-2,-9,-10,-11,-12,-13,-14,-15,-16,-17,-18,-19,-20,-21,-22,-23,-24)]
+})-> result
+write.csv(result,"suminoe_20171008.csv", row.names = F)
+
+
+##競艇オッズデータ抽出
+library(rvest)
+library(pforeach)
+
+npforeach(i=1:12, .c=rbind)({
+  cat(i,"\n")
+  url<-sprintf("https://www.boatrace.jp/owpc/pc/race/oddstf?rno=%d&jcd=12&hd=20170918",i)
+  Sys.sleep(3)
+  html <- read_html(url)
+  li_nodes <- html %>% html_nodes(xpath='/html/body/main/div/div/div/div[2]/div[5]/div/div[2]/table/tbody')
+  name <- li_nodes %>% html_nodes(xpath = "tr") %>% html_text %>% iconv("utf8", "cp932")
+  a<- data.frame(name=name[-(7:12)])
+})-> result
+write.csv(result,"suminoe_odd_170918.csv", row.names = F)
+
+day1_bind<- left_join(day1, player, by="number")
+day1_bind<- left_join(day1_bind, morter, by="morter_number")
+day1_bind<- left_join(day1_bind, boat, by="boat_number")
+
+r1<- read.csv("day4_1.csv", header = T, sep="")
