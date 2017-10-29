@@ -1,0 +1,161 @@
+dim(iris) # 行数:150, 列数:5
+odd.n<-2*(1:75)-1
+iris.train<-iris[odd.n,] # 奇数を訓練データ
+iris.test<-iris[-odd.n,] # 偶数を検証データ
+
+library(xgboost)
+library(Matrix)
+y <- iris.train[,5] # 目的変数
+y <- as.integer(y)-1 #xgboost で既定されているクラスは 0 base
+
+train.x<-iris.train[,1:4]
+x <- rbind(train.x,iris.test[,-5]) # xgboost を使うときのため
+x <- as.matrix(x)
+
+trind <- 1:length(y) # 先程定義したx の中の訓練データを指すのに使う
+teind <- (nrow(train.x)+1):nrow(x) # 先程定義したx の中の検証用データを指すのに使う
+
+set.seed(131) # 固定シードで試す
+param <- list("objective" = "multi:softprob", # 多クラスの分類で各クラスに所属する確率を求める
+              "eval_metric" = "mlogloss", # 損失関数の設定
+              "num_class" = 3# class がいくつ存在するのか
+              )
+
+k<-round(1+log2(nrow(train.x)))
+cv.nround <- 100 #search
+bst.cv <- xgb.cv(param=param, data = x[trind,], label = y,  nfold = k, nrounds=cv.nround)
+
+set.seed(131)
+nround <- 27
+# モデルの構築
+bst <- xgboost(param=param, data = x[trind,], label = y, nrounds=nround)
+pred <- predict(bst,x[teind,]) # モデルを使って予測値を算出
+pred <- matrix(pred,3,length(pred)/3) # 今回は3クラスあるので
+pred <- t(pred)
+colnames(pred)<-c("setosa","versicolor","virginica")
+
+
+param <- list("objective" = "multi:softmax", # multi:softmax に変更！
+                "eval_metric" = "mlogloss", 
+                "num_class" = 3 
+                )
+set.seed(131)
+nround <- 27
+bst <- xgboost(param=param, data = x[trind,], label = y, nrounds=nround)
+pred <- predict(bst,x[teind,])
+
+for(i in 1:length(pred)){
+  if(pred[i]==0) {pred[i]="setosa"}
+  else if(pred[i]==1) {pred[i]="versicolor"}
+  else {pred[i]="virginica"}
+}
+table(iris.test[,5],pred)
+
+# 変数重要度を求める
+imp<-xgboost::xgb.importance(names(iris),model=bst)
+print(imp)
+# print の結果
+        Feature        Gain      Cover Frequence
+1: Petal.Length 0.663081352 0.63384270 0.4453125
+2:  Petal.Width 0.318246635 0.24789925 0.2656250
+3: Sepal.Length 0.011982305 0.09317686 0.2187500
+4:  Sepal.Width 0.006689708 0.02508119 0.0703125
+# print の結果ここまで
+xgb.plot.importance(imp) # これをグラフで表示
+
+
+# 決定木を表示
+xgb.plot.tree(feature_names=names(iris[,-5]),model=bst, n_first_tree=2)
+
+
+# 簡易版 classは0ベースに変更
+library(xgboost)
+library(Matrix)
+library(dplyr)
+
+scaled.train$result<- as.integer(scaled.train$result)-1
+scaled.test$result<- as.integer(scaled.test$result)-1
+train_label<- scaled.train$result
+test_label<- scaled.test$result
+train<- scaled.train[,-21]
+test<- scaled.test[,-21]
+train<- as.matrix(train)
+test<- as.matrix(test)
+dtrain<-xgboost::xgb.DMatrix(train, label= train_label)
+dtest<- xgboost::xgb.DMatrix(test, label= test_label)
+
+params <- list(booster = "gbtree", objective = "binary:logistic", eta=0.1, gamma=0, max_depth=6, min_child_weight=1, subsample=1, colsample_bytree=1)
+
+#最適な木の本数を決める
+xgbcv <- xgb.cv( params = params, data = dtrain, nrounds = 100, nfold = 5, showsd = T, stratified = T, print.every.n = 10, early.stop.round = 20, maximize = F)
+min(xgbcv$test.error.mean)
+
+#モデル構築
+
+ xgb1 <- xgb.train (params = params, data = dtrain, nrounds =xgbcv$best_iteration, watchlist = list(val=dtest,train=dtrain), print.every.n = 10, early.stop.round = 10, maximize = F , eval_metric = "error")
+
+ ##チューニング
+ scaled.train$result<- as.factor(scaled.train$result)
+ traintask <- makeClassifTask (data = scaled.train,target = "result")
+ scaled.test$result<- as.factor(scaled.test$result)
+ testtask <- makeClassifTask (data = scaled.test,target = "result")
+lrn <- makeLearner("classif.xgboost",predict.type = "response")
+lrn$par.vals <- list( objective="binary:logistic", eval_metric="error", nrounds=100L, eta=0.1)
+params <- makeParamSet( makeDiscreteParam("booster",values = c("gbtree","gblinear")), makeIntegerParam("max_depth",lower = 3L,upper = 10L), makeNumericParam("gamma",lower = 0L,upper = 10L),makeNumericParam("min_child_weight",lower = 1L,upper = 10L), makeNumericParam("subsample",lower = 0.5,upper = 1), makeNumericParam("colsample_bytree",lower = 0.5,upper = 1))
+rdesc <- makeResampleDesc("CV",stratify = T,iters=5L)
+ctrl <- makeTuneControlRandom(maxit = 10L)
+
+library(parallel)
+library(parallelMap) 
+parallelStartSocket(cpus = detectCores())
+mytune <- tuneParams(learner = lrn, task = traintask, resampling = rdesc, measures = acc, par.set = params, control = ctrl, show.info = T)
+
+params <- list(booster = "gbtree", objective = "binary:logistic", eta=0.1, gamma=mytune$x$gamma, max_depth=mytune$x$max_depth, min_child_weight=mytune$x$min_child_weight, subsample=mytune$x$subsample, colsample_bytree=mytune$x$colsample_bytree)
+
+xgbcv <- xgb.cv( params = params, data = dtrain, nrounds = 100, nfold = 5, showsd = T, stratified = T, print.every.n = 10, early.stop.round = 20, maximize = F)
+min(xgbcv$best_iteration)
+xgb1 <- xgb.train (params = params, data = dtrain, nrounds =xgbcv$best_iteration, watchlist = list(val=dtest,train=dtrain), print.every.n = 10, early.stop.round = 10, maximize = F , eval_metric = "error")
+
+xgbpred <- predict (xgb1,dtest)
+xgbpred <- ifelse (xgbpred > 0.5,1,0)
+tbl <- table(xgbpred, test_label)
+tbl
+sum(diag(tbl)) / sum(tbl)
+
+##簡易版
+bst<-xgboost::xgboost(params=list(objective="multi:softmax", num_class=2, eval_metric="mlogloss", eta=0.3, gamma=0, max_depth=6, subsample=1, colsample_bytree=1), data=dtrain, label=scaled.train$result,  nrounds=18, nfold = 5)
+bst2<-xgboost::xgboost(params=list(objective="multi:softprob", num_class=2, eval_metric="mlogloss", eta=0.2, max_depth=5, subsample=1, colsample_bytree=0.5), data=dtrain, label=suminoe_bind$result,  nrounds=27, nfold = 5)
+##softmax
+test_pred<- predict(bst, newdata = dtest) %>% as.data.frame()
+cbind(test_pred, scaled.test[,21]) %>%  View()
+test_pred<-  matrix(test_pred,2,length(test_pred)/2)
+test_pred <- t(test_pred)
+
+##softprob
+test_pred2<- predict(bst2, newdata = dtest)
+test_pred2<- test_pred2*100
+test_pred2<-  matrix(test_pred2,2,length(test_pred2)/2)
+test_pred2 <- t(test_pred2)
+cbind(test_pred2, test_bind[,18]) %>%  View()
+
+
+##softmax+softprob
+test_pred<- predict(bst, newdata = dtest)
+test_pred2<- predict(bst2, newdata = dtest)
+test_pred2<- test_pred2*100
+test_pred2<-  matrix(test_pred2,2,length(test_pred2)/2)
+test_pred2 <- t(test_pred2) %>% as.data.frame()
+cbind(test_bind$course,test_pred,test_pred2, test2_bind[,18]) %>%  View()
+
+##予測精度を評価
+pred<- predict(bst, newdata = dtest) 
+tbl <- table(xgbpred, test_label)
+tbl
+sum(diag(tbl)) / sum(tbl)
+
+##重要指標抽出
+imp<-xgboost::xgb.importance(names(scaled.train),model=xgb1)
+xgboost::xgb.plot.importance(imp) 
+xgb.plot.tree(feature_names=names(suminoe_bind[,-18]),model=bst, n_first_tree=2)
+
+write.csv(test_pred2, "test_result.csv", row.names = F)
