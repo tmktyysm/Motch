@@ -1,0 +1,46 @@
+library("twitteR")
+library(ROAuth)
+ 
+#情報の入力
+consumerKey <- "94hYzuRuQIJvwtauXrmCqcAIq"
+consumerSecret <- "GLRXhJRVowpKeTdmzOnbtCiOdQTFDpNXUV2pkCsD1ypSNnP9tH"
+accessToken <- "541744281-R2OuUuCEPpFD1LWLkFtOU0KZUBMhhGapLKQ5VRe9"
+accessSecret <- "u73pM68aXyPtwbGtwvTx54yt5zwXiw8ZT5dE4ryO8HHYM"
+ 
+#処理の準備
+#httr_oauth_chcheを保存
+options(httr_oauth_cache = TRUE)
+#認証情報の取得
+setup_twitter_oauth(consumerKey, consumerSecret, accessToken, accessSecret)
+
+#ユーザーのタイムラインを取得
+userTimeline(user = "KaradaGood", n = 100)
+ 
+#Rから投稿:updateStatusコマンド
+#画像も同時にツイートできます
+#画像ファイルの読み込み
+#ファイル名に日本語が含まれているとエラーになります
+library("tcltk")
+Media <- paste(as.character(tkgetOpenFile(title = "画像ファイルを選択",
+                                           filetypes = '{"画像ファイル" {".png" ".jpg" ".jpag" ".gif"}}',
+                                           initialfile = c("*.*"))), sep = "", collapse ="")
+#twitterへ投稿
+NewTw <- updateStatus("2015/07/30 公開\nRでTwitter操作:「twitterR」パッケージ！バージョン1.1.9の紹介\nhttps://www.karada-good.net/analyticsr/r-170/",
+                      mediaPath = Media)
+ 
+#Rから投稿の削除:deleteStatusコマンド
+#updateStatusコマンドと合わせて使用します
+deleteStatus(NewTw)
+ 
+#キーワードでツイートを検索:searchTwitterコマンド
+#検索キーワードの設定
+SearchWords <- c("シャーロット")
+#検索
+TwGetDF <- twListToDF(searchTwitter(SearchWords, n = 100))
+#データを表示
+#View(TwGetDF)
+#TwGetDF
+ 
+#トレンドワードの取得:getTrendsコマンド
+TrendWords <- data.frame(TrendWord = getTrends(woeid = 23424856)$name)
+TrendWords
