@@ -14,7 +14,7 @@ options(httr_oauth_cache = TRUE)
 setup_twitter_oauth(consumerKey, consumerSecret, accessToken, accessSecret)
 
 #ユーザーのタイムラインを取得
-userTimeline(user = "KaradaGood", n = 100)
+userTimeline(user = "Motch", n = 100)
  
 #Rから投稿:updateStatusコマンド
 #画像も同時にツイートできます
