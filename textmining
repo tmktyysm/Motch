@@ -1,0 +1,1782 @@
+########## 第1章 ##########
+
+# 1から4までの数値をxという変数に代入（c関数を使用）
+x <- c(1, 2, 3, 4)
+# sum関数を使って，変数xの中の数値の総和を計算
+sum(x)
+
+# 変数xに代入された4つの数値から2行2列の行列を作成し，変数matに代入
+mat <- matrix(x, nrow = 2, ncol = 2, byrow = TRUE)
+# 変数matの中身を確認
+mat
+
+# 行ラベルを付与
+rownames(mat) <- c("R1", "R2")
+# 列ラベルを付与
+colnames(mat) <- c("C1", "C2")
+# ラベルをつけた行列を確認
+mat
+
+# sum関数のヘルプを参照
+help(sum)
+
+# RMeCabのインストール
+# すでにRとMeCabの両方がインストールされている場合
+install.packages("RMeCab", repos = "http://rmecab.jp/R")
+
+# RMeCabパッケージの読み込み
+library("RMeCab")
+# 形態素解析
+RMeCabC.result <- RMeCabC("形態素解析は文を単語単位に分割する技術です")
+# リスト形式の解析結果をベクトル形式に変換
+unlist(RMeCabC.result)
+
+# Rで英文を解析
+# パッケージのインストール
+install.packages(c("openNLP", "NLP"), dependencies = TRUE)
+# パッケージの読み込み
+library("openNLP")
+library("NLP")
+library("purrr")
+library("magrittr")
+# 分析するテキストデータを用意
+text <- "R is a free software environment for statistical computing and graphics."
+text <- as.String(text)
+# 品詞情報を付与
+sent_token_annotator <- Maxent_Sent_Token_Annotator()
+word_token_annotator <- Maxent_Word_Token_Annotator()
+text_an <- annotate(text, list(sent_token_annotator, word_token_annotator))
+pos_tag_annotator <- Maxent_POS_Tag_Annotator()
+text_an2 <- annotate(text, pos_tag_annotator, text_an)
+# 品詞情報付与結果を整形
+text_an3 <- subset(text_an2, type == "word")
+tags <- map_chr(text_an3$features, extract(1))
+sprintf("%s: %s", text[text_an3], tags)
+
+# ローカルからパッケージのインストール（openNLPmodels.en_1.5-1.tar.gzを選択）
+install.packages(pkgs = file.choose(), repos = NULL, type = "source")
+# パッケージの読み込み
+library("openNLP")
+library("NLP")
+library("purrr")
+library("magrittr")
+# 分析するテキストデータを用意
+s <- "R is a free software environment for statistical computing and graphics."
+s <- as.String(s)
+# 構文解析
+sent_token_annotator <- Maxent_Sent_Token_Annotator()
+word_token_annotator <- Maxent_Word_Token_Annotator()
+a2 <- annotate(s, list(sent_token_annotator, word_token_annotator))
+parse_annotator <- Parse_Annotator()
+p <- parse_annotator(s, a2)
+ptexts <- map_chr(p$features, extract(1))
+# 構文解析結果を表示
+ptexts
+# 構文解析結果を木構造で表示
+ptrees <- lapply(ptexts, Tree_parse)
+ptrees
+
+# パッケージのインストール
+install.packages(c("tm", "stringr"), dependencies = TRUE)
+# パッケージの読み込み
+library("tm")
+library("stringr")
+# テキストファイルからのデータ読み込み（Trump.txtを選択）
+# 単語ごとに読み込み
+Trump <- scan(file.choose(), what = "char", quiet = TRUE)
+# 読み込んだデータを確認
+head(Trump)
+# すべての文字を小文字に変換
+Trump.lower <- str_to_lower(Trump)
+# 句読点の削除
+Trump.cleaned <- removePunctuation(Trump.lower)
+# 整形済みのデータを確認
+head(Trump.cleaned)
+
+# Rで評判分析
+# パッケージのインストール
+install.packages(c("tidytext", "dplyr"), dependencies = TRUE)
+# パッケージの読み込み
+library("tidytext")
+library("dplyr")
+# ポジティブな単語を辞書から抽出
+positive <- filter(get_sentiments("nrc"), sentiment == "positive")
+# 分析データからポジティブな単語を抽出
+Trump.positive <- Trump.cleaned %in% positive$word
+Trump.positive.2 <- grep("TRUE", Trump.cleaned %in% positive$word)
+# 分析データにおけるポジティブな単語の数を計算
+length(Trump.positive.2)
+# 分析データで使われているポジティブな単語を表示
+Trump.cleaned[Trump.positive]
+# ネガティブな単語を辞書から抽出
+negative <- filter(get_sentiments("nrc"), sentiment == "negative")
+# 分析データからネガティブな単語を抽出
+Trump.negative <- Trump.cleaned %in% negative$word
+Trump.negative.2 <- grep("TRUE", Trump.cleaned %in% negative$word)
+# 分析データにおけるネガティブな単語の数を計算
+length(Trump.negative.2)
+Trump.cleaned[Trump.negative]
+
+# パッケージのインストール
+install.packages("devtools", dependencies = TRUE)
+devtools::install_github("sfeuerriegel/SentimentAnalysis")
+# パッケージの読み込み
+library("SentimentAnalysis")
+library("NLP")
+# テキストファイルからのデータ読み込み（Trump.txtを選択）
+# 文ごとに読み込み
+Trump.2 <- scan(file.choose(), what = "char", sep = "\n", quiet = TRUE)
+# 読み込んだデータを確認
+head(Trump.2)
+# 文単位の評判分析
+sentiment <- analyzeSentiment(Trump.2)
+convertToDirection(sentiment$SentimentGI)
+# ポジティブな文，ネガティブな文，ニュートラルな文の集計
+table(convertToDirection(sentiment$SentimentGI))
+
+# パッケージのインストール
+install.packages("textcat", dependencies = TRUE)
+# パッケージの読み込み
+library("textcat")
+# プログラムの設定
+prof <- TC_byte_profiles[names(TC_byte_profiles)]
+# 多言語データの読み込み
+dat <- c(
+  "R is an open source programming language and software environment for statistical computing and graphics that is supported by the R Foundation for Statistical Computing.",
+  "R ist eine freie Programmiersprache für statistische Berechnungen und Grafiken.",
+  "R est un langage informatique dédié aux statistiques et à la science des données.",
+"R es un entorno y lenguaje de programación con un enfoque al análisis estadístico."
+)
+# 読み込んだデータの言語を判定
+textcat(dat, p = prof)
+
+# 言語判定がうまくいかない例
+textcat("Good morning!", p = prof)
+
+
+# パッケージのインストール
+install.packages("LSAfun", dependencies = TRUE)
+# パッケージの読み込み
+library("LSAfun")
+# テキストファイルからのデータ読み込み（summarization.txtを選択）
+text <- scan(file.choose(), what = "char", sep = "\n", quiet = TRUE)
+# 読み込んだデータを確認
+text
+
+# 文書全体を最も的確に表す1文を抽出
+genericSummary(text, k = 1)
+# 文書全体を最も的確に表す2文を抽出
+genericSummary(text, k = 2)
+# 文書全体を最も的確に表す3文を抽出
+genericSummary(text, k = 3)
+
+########## 第2章 ##########
+
+# テキストデータの読み込み
+# 英語のテキストを単語単位で読み込み（Trump.txtを選択）
+Trump <- scan(file.choose(), what = "char", quiet = TRUE)
+# 読み込んだテキストを確認
+head(Trump)
+# 英語のテキストを行単位で読み込み（Trump.txtを選択）
+Trump.2 <- scan(file.choose(), what = "char", sep = "\n", quiet = TRUE)
+# 読み込んだテキストを確認
+head(Trump.2)
+
+# 読み込む要素数を指定（ここでは，冒頭3行のみを読み込み）（Trump.txtを選択）
+Trump.3 <- scan(file.choose(), what = "char", sep = "\n", n = 3, quiet = TRUE)
+# 読み込んだテキストを確認
+Trump.3
+
+# 日本語のテキストを行単位で読み込み（Abe.txtを選択）
+Abe <- scan(file.choose(), what = "char", sep = "\n", quiet = TRUE)
+# 読み込んだテキストを確認
+head(Abe)
+
+# パッケージのインストール
+install.packages(c("purrr", "magrittr"), dependencies = TRUE)
+# パッケージの読み込み
+library("RMeCab")
+library("purrr")
+library("magrittr")
+# RMeCabText関数で形態素解析（Abe.txtを選択）
+RMeCabText.result <- RMeCabText(file.choose())
+# RMeCabText関数の結果を確認
+head(RMeCabText.result)
+# 単語の表層形の情報だけを抽出
+RMeCabText.result.2 <- map_chr(RMeCabText.result, extract(1)) 
+# 抽出した情報を確認
+head(RMeCabText.result.2)
+
+# パッケージの読み込み
+library("stringr")
+library("tm")
+# サンプルデータを用意
+sample <- c("YOU", "You", "you", "you.", "you,", ".", ",", "120", "333")
+# すべての文字を小文字に変換
+str_to_lower(sample)
+# 句読点の削除
+removePunctuation(sample)
+# 数字の削除
+removeNumbers(sample)
+
+# 英語のテキストを単語単位で読み込み（Trump.txtを選択）
+Trump <- scan(file.choose(), what = "char", quiet = TRUE)
+# すべての文字を小文字に変換
+Trump.lower <- str_to_lower(Trump)
+# 句読点の削除
+Trump.cleaned <- removePunctuation(Trump.lower)
+# 数字の削除
+Trump.cleaned <- removeNumbers(Trump.cleaned)
+# 整形済みのデータを確認
+head(Trump.cleaned)
+
+# tmパッケージで定義されているストップワードを確認
+stopwords("english")
+# テキストからストップワードを一括で削除
+removeWords(Trump.cleaned, stopwords("english"))
+
+# サンプルデータを用意
+sample.2 <- c("2017年", "２０１７年", "。", "，", "？", "！")
+# 半角と全角の数字を削除
+str_replace_all(string = sample.2, pattern = "[0-9０-９]", replacement = "")
+# 句読点などの記号を削除
+str_replace_all(string = sample.2, pattern = "[。．、，？！]", replacement = "")
+
+# 空の要素を削除
+# Trump.cleanedは本節上段で作成済み
+not.blank <- which(Trump.cleaned != "")
+Trump.cleaned.2 <- Trump.cleaned[not.blank]
+
+# 単語の頻度集計（英語）
+# パッケージの読み込み
+library("stringr")
+library("tm")
+# 英語のテキストを単語単位で読み込み（Trump.txtを選択）
+Trump <- scan(file.choose(), what = "char", quiet = TRUE)
+# テキストを整形
+Trump.lower <- str_to_lower(Trump)
+Trump.cleaned <- removePunctuation(Trump.lower)
+Trump.cleaned <- removeNumbers(Trump.cleaned)
+not.blank <- which(Trump.cleaned != "")
+Trump.cleaned.2 <- Trump.cleaned[not.blank]
+# 単語の頻度を集計
+Trump.freq.list <- table(Trump.cleaned.2)
+# 集計結果を確認
+head(Trump.freq.list)
+
+# 集計結果を頻度順に並び替え
+Trump.freq.list.2 <- sort(Trump.freq.list, decreasing = TRUE)
+# 並び替えた結果を確認
+head(Trump.freq.list.2)
+
+# データフレームの形式に変換
+Trump.freq.list.df <- as.data.frame(Trump.freq.list.2)
+# データフレームを確認
+head(Trump.freq.list.df)
+
+# 単語の頻度集計（日本語）
+# パッケージの読み込み
+library("RMeCab")
+library("purrr")
+library("magrittr")
+# RMeCabText関数で形態素解析（Abe.txtを選択）
+RMeCabText.result <- RMeCabText(file.choose())
+# 単語の表層形の情報だけを抽出
+RMeCabText.result.2 <- map_chr(RMeCabText.result, extract(1))
+# 単語の頻度を集計
+Abe.freq.list <- table(RMeCabText.result.2)
+# 集計結果を頻度順に並び替え
+Abe.freq.list.2 <- sort(Abe.freq.list, decreasing = TRUE)
+# データフレームの形式に変換
+Abe.freq.list.df <- as.data.frame(Abe.freq.list.2)
+# データフレームを確認
+head(Abe.freq.list.df)
+
+# パッケージの読み込み
+library("RMeCab")
+# RMeCabFreq関数による頻度表の作成（Abe.txtを選択）
+RMeCabFreq.result <- RMeCabFreq(file.choose())
+# 集計結果を確認
+head(RMeCabFreq.result)
+# 集計結果を頻度順に並び替え
+RMeCabFreq.result.2 <- RMeCabFreq.result[order(RMeCabFreq.result$Freq, decreasing = TRUE), ]
+# 並び替えた結果を確認
+head(RMeCabFreq.result.2)
+# 品詞の情報を削除
+RMeCabFreq.result.3 <- RMeCabFreq.result.2[, -2]
+RMeCabFreq.result.3 <- RMeCabFreq.result.3[, -2]
+# 品詞の情報を削除した結果を確認
+head(RMeCabFreq.result.3)
+
+# パッケージの読み込み
+library("tm")
+library("stringr")
+# 分析対象とするテキスト（のみ）が入ったフォルダのパスを指定
+dir <- "/Users/User/Documents/US_speeches"
+# フォルダ内のテキストすべてをコーパスとして指定
+corpus <- Corpus(DirSource(dir, encoding = "UTF-8"), readerControl = list(language = "en"))
+# テキストを整形
+# すべての文字を小文字に変換
+corpus.cleaned <- tm_map(corpus, str_to_lower)
+# 句読点を削除
+corpus.cleaned <- tm_map(corpus.cleaned, removePunctuation)
+# 数字を削除
+corpus.cleaned <- tm_map(corpus.cleaned, removeNumbers)
+# 不要なスペース，タブ，改行を削除
+corpus.cleaned <- tm_map(corpus.cleaned, stripWhitespace)
+# 文書ターム行列の作成
+dtm <- DocumentTermMatrix(corpus.cleaned)
+# 作成した文書ターム行列のクラスを確認
+class(dtm)
+# 作成した文書ターム行列を通常の行列に変換
+dtm.mat <- as.matrix(dtm)
+rownames(dtm.mat) <- names(corpus)
+# 通常の行列に変換した文書ターム行列を確認
+dtm.mat
+
+# パッケージの読み込み
+library("RMeCab")
+# 分析対象とするテキスト（のみ）が入ったフォルダのパスを指定
+dir.2 <- "/Users/User/Documents/JP_speeches"
+# 文書ターム行列の作成（単語を集計する場合は，引数typeで1を指定）
+docDF.result <- docDF(dir.2, type = 1)
+# 作成した文書ターム行列のクラスを確認
+class(docDF.result)
+# 作成した文書ターム行列を確認
+head(docDF.result)
+
+# 単語2-gramの頻度集計（英語）
+# パッケージの読み込み
+library("stringr")
+library("tm")
+# 英語のテキストを単語単位で読み込み（Trump.txtを選択）
+Trump <- scan(file.choose(), what = "char", quiet = TRUE)
+# テキストを整形
+Trump.lower <- str_to_lower(Trump)
+Trump.cleaned <- removePunctuation(Trump.lower)
+Trump.cleaned <- removeNumbers(Trump.cleaned)
+not.blank <- which(Trump.cleaned != "")
+Trump.cleaned.2 <- Trump.cleaned[not.blank]
+# 隣り合う2つの単語を結合
+Trump.ngrams <- paste(Trump.cleaned.2[1 : (length(Trump.cleaned.2) - 1)], Trump.cleaned.2[2 : length(Trump.cleaned.2)])
+# 結合した結果を確認
+head(Trump.ngrams)
+# 単語2-gramを集計
+Trump.ngrams.freq <- table(Trump.ngrams)
+# 集計した結果を確認
+head(Trump.ngrams.freq)
+# 集計結果を頻度順に並び替え
+Trump.ngrams.freq.2 <- sort(Trump.ngrams.freq, decreasing = TRUE)
+# 並び替えた結果を確認
+head(Trump.ngrams.freq.2)
+# データフレームの形式に変換
+Trump.ngrams.freq.df <- as.data.frame(Trump.ngrams.freq.2)
+# データフレームを確認
+head(Trump.ngrams.freq.df)
+
+# 単語2-gramの頻度集計（日本語）
+# パッケージの読み込み
+library("RMeCab")
+library("purrr")
+library("magrittr")
+# RMeCabText関数で形態素解析（Abe.txtを選択）
+RMeCabText.result <- RMeCabText(file.choose())
+# 単語の表層形の情報だけを抽出
+RMeCabText.result.2 <- map_chr(RMeCabText.result, extract(1))
+# 隣り合う2つの単語を結合
+Abe.ngrams <- paste(RMeCabText.result.2[1 : (length(RMeCabText.result.2) - 1)], RMeCabText.result.2[2 : length(RMeCabText.result.2)])
+# 結合した結果を確認
+head(Abe.ngrams)
+# 単語2-gramを集計
+Abe.ngrams.freq <- table(Abe.ngrams)
+# 集計した結果を確認
+head(Abe.ngrams.freq)
+# 集計結果を頻度順に並び替え
+Abe.ngrams.freq.2 <- sort(Abe.ngrams.freq, decreasing = TRUE)
+# 並び替えた結果を確認
+head(Abe.ngrams.freq.2)
+# データフレームの形式に変換
+Abe.ngrams.freq.df <- as.data.frame(Abe.ngrams.freq.2)
+# データフレームを確認
+head(Abe.ngrams.freq.df)
+
+# パッケージの読み込み
+library("RMeCab")
+# Ngram関数で形態素解析（Abe.txtを選択）
+Ngram.result <- Ngram(file.choose(), N = 2, type = 1)
+# 集計結果を確認
+head(Ngram.result)
+# 集計結果を頻度順に並び替え
+Ngram.result.2 <- Ngram.result[order(Ngram.result$Freq, decreasing = TRUE), ]
+# 並び替えた結果を確認
+head(Ngram.result.2)
+
+# 共起語の頻度集計（英語）
+# パッケージの読み込み
+library("stringr")
+library("tm")
+# 英語のテキストを単語単位で読み込み（Trump.txtを選択）
+Trump <- scan(file.choose(), what = "char", quiet = TRUE)
+# テキストを整形
+Trump.lower <- str_to_lower(Trump)
+Trump.cleaned <- removePunctuation(Trump.lower)
+Trump.cleaned <- removeNumbers(Trump.cleaned)
+not.blank <- which(Trump.cleaned != "")
+Trump.cleaned.2 <- Trump.cleaned[not.blank]
+# 共起語の集計
+# 分析データ（単語ベクトル）の指定
+word.vector <- Trump.cleaned.2
+# 検索語の指定（ここでは，"we"）
+search.word <- "^we$"
+# スパンの指定（ここでは，左右2語まで）
+span <- 2
+span <- (-span : span)
+# 検索語の出現する位置を特定
+positions.of.matches <- grep(search.word, word.vector, perl = TRUE)
+# 検索語の出現する位置を確認
+head(positions.of.matches)
+# 空のベクトルを作成
+results <- NULL
+# 共起語を抽出し，空のベクトルに追加
+for(i in 1 : length(span)) {
+    collocate.positions <- positions.of.matches + span[i]
+    collocates <- word.vector[collocate.positions]
+    results <- append(results, collocates)
+}
+# 抽出した共起語を確認
+head(results)
+# spanが0の共起語（＝検索語）を削除
+results <- str_replace_all(string = results, pattern = search.word, replacement = "")
+not.blank <- which(results != "")
+results <- results[not.blank]
+# 共起語の頻度を集計
+collocates.list <- table(results)
+# 集計結果を頻度順に並び替え
+collocates.list.2 <- sort(collocates.list, decreasing = TRUE)
+# データフレームの形式に変換
+collocates.list.df <- as.data.frame(collocates.list.2)
+# データフレームの列名を変更
+colnames(collocates.list.df) <- c("Collocate", "Freq")
+# データフレームを確認
+head(collocates.list.df)
+
+# 共起語の頻度集計（日本語）
+# パッケージの読み込み
+library("RMeCab")
+library("purrr")
+library("magrittr")
+library("stringr")
+# RMeCabText関数で形態素解析（Abe.txtを選択）
+RMeCabText.result <- RMeCabText(file.choose())
+# 単語の表層形の情報だけを抽出
+RMeCabText.result.2 <- map_chr(RMeCabText.result, extract(1))
+# 分析データ（単語ベクトル）の指定
+word.vector <- RMeCabText.result.2
+# 検索語の指定（ここでは，"国民"）
+search.word <- "^国民$"
+# スパンの指定（ここでは，左右2語まで）
+span <- 2
+span <- (-span : span)
+# 検索語の出現する位置を特定
+positions.of.matches <- grep(search.word, word.vector, perl = TRUE)
+# 空のベクトルを作成
+results <- NULL
+# 共起語を抽出し，空のベクトルに追加
+for(i in 1 : length(span)) {
+    collocate.positions <- positions.of.matches + span[i]
+    collocates <- word.vector[collocate.positions]
+    results <- append(results, collocates)
+}
+# spanが0の共起語（＝検索語）を削除
+results <- str_replace_all(string = results, pattern = search.word, replacement = "")
+not.blank <- which(results != "")
+results <- results[not.blank]
+# 共起語の頻度を集計
+collocates.list <- table(results)
+# 集計結果を頻度順に並び替え
+collocates.list.2 <- sort(collocates.list, decreasing = TRUE)
+# データフレームの形式に変換
+collocates.list.df <- as.data.frame(collocates.list.2)
+# データフレームの列名を変更
+colnames(collocates.list.df) <- c("Collocate", "Freq")
+# データフレームを確認
+head(collocates.list.df)
+
+# パッケージの読み込み
+library("RMeCab")
+# collocate関数で形態素解析して共起語を集計（Abe.txtを選択）
+collocate.result <- collocate(file.choose(), node = "国民", span = 2)
+# 集計した結果を確認
+head(collocate.result)
+
+# パッケージの読み込み
+library("stringr")
+library("tm")
+# 英語のテキストを単語単位で読み込み（Trump.txtを選択）
+Trump <- scan(file.choose(), what = "char", quiet = TRUE)
+# テキストを整形
+Trump.lower <- str_to_lower(Trump)
+Trump.cleaned <- removePunctuation(Trump.lower)
+Trump.cleaned <- removeNumbers(Trump.cleaned)
+not.blank <- which(Trump.cleaned != "")
+Trump.cleaned.2 <- Trump.cleaned[not.blank]
+# KWICコンコーダンスの作成（英語）
+# 分析データ（単語ベクトル）の指定
+word.vector <- Trump.cleaned.2
+# 検索語の生起位置を取得（ここでは，"we"）
+word.positions <- which(word.vector == "we")
+# 検索語の左右何語まで表示するかを指定（ここでは，5語）
+context <- 5
+# KWICコンコーダンスの作成
+for(i in seq(word.positions)) {
+   if(word.positions[i] == 1) {
+      before <- NULL
+   } else {
+   start <- word.positions[i] - context
+   start <- max(start, 1)
+   before <- word.vector[start : (word.positions[i] - 1)]
+}
+end <- word.positions[i] + context
+after <- word.vector[(word.positions[i] + 1) : end]
+after[is.na(after)] <- ""
+keyword <- word.vector[word.positions[i]]
+cat("--------------------", i, "--------------------", "¥n")
+cat(before, "[", keyword, "]", after, "¥n")
+}
+
+# パッケージの読み込み
+library("RMeCab")
+library("purrr")
+library("magrittr")
+# RMeCabText関数で形態素解析（Abe.txtを選択）
+RMeCabText.result <- RMeCabText(file.choose())
+# 単語の表層形の情報だけを抽出
+RMeCabText.result.2 <- map_chr(RMeCabText.result, extract(1))
+# KWICコンコーダンスの作成（日本語）
+# 分析データ（単語ベクトル）の指定
+word.vector <- RMeCabText.result.2
+# 検索語の生起位置を取得（ここでは，"国民"）
+word.positions <- which(word.vector == "国民")
+# 検索語の左右何語まで表示するかを指定（ここでは，5語）
+context <- 5
+# KWICコンコーダンスの作成
+for(i in seq(word.positions)) {
+   if(word.positions[i] == 1) {
+      before <- NULL
+   } else {
+   start <- word.positions[i] - context
+   start <- max(start, 1)
+   before <- word.vector[start : (word.positions[i] - 1)]
+}
+end <- word.positions[i] + context
+after <- word.vector[(word.positions[i] + 1) : end]
+after[is.na(after)] <- ""
+keyword <- word.vector[word.positions[i]]
+cat("--------------------", i, "--------------------", "¥n")
+cat(before, "[", keyword, "]", after, "¥n")
+}
+
+########## 第3章 ##########
+
+# Wikipediaからテキストデータを抽出（英語）
+# パッケージのインストール
+install.packages("rvest", dependencies = TRUE)
+# パッケージの読み込み
+library("rvest")
+# HTMLファイルを取得（URLを直接指定）
+wiki.en <- read_html("https://en.wikipedia.org/wiki/R_(programming_language)")
+# 本文を抽出（引数xpath指定した部分，すなわちpタグで囲まれた文字列のみを抽出）
+wiki.en.2 <- html_nodes(wiki.en, xpath = "//p")
+wiki.en.3 <- html_text(wiki.en.2)
+# 抽出した本文を確認
+head(wiki.en.3)
+
+# 空行を削除
+not.blank <- which(wiki.en.3 != "")
+wiki.en.4 <- wiki.en.3[not.blank]
+# 空行を削除したデータを確認
+head(wiki.en.4)
+
+# Wikipediaからテキストデータを抽出（日本語）
+# パッケージの読み込み
+library("rvest")
+# HTMLファイルを取得（URLを直接指定）
+wiki.jp <- read_html("https://ja.wikipedia.org/wiki/R%E8%A8%80%E8%AA%9E")
+# 本文を抽出（引数xpath指定した部分，すなわちpタグで囲まれた文字列のみを抽出）
+wiki.jp.2 <- html_nodes(wiki.jp, xpath = "//p")
+wiki.jp.3 <- html_text(wiki.jp.2)
+# 空行を削除
+not.blank <- which(wiki.jp.3 != "")
+wiki.jp.4 <- wiki.jp.3[not.blank]
+# 空行を削除したデータを確認
+head(wiki.jp.4)
+
+# ブログからテキストデータを抽出
+# パッケージの読み込み
+library("rvest")
+# HTMLファイルを取得（URLを直接指定）
+ohm.blog <- read_html("http://www.ohmsha.co.jp/kaihatsu/")
+# 本文を抽出（引数xpath指定した部分，すなわちpタグで囲まれた文字列のみを抽出）
+ohm.blog.2 <- html_nodes(ohm.blog, xpath = "//p")
+ohm.blog.3 <- html_text(ohm.blog.2)
+# 抽出した本文を確認
+head(ohm.blog.3)
+
+# 改行を削除
+ohm.blog.4 <- gsub("\n", "", ohm.blog.3, perl = TRUE)
+# 改行を削除したデータを確認
+head(ohm.blog.4)
+
+# 任意のアカウントのツイートを取得
+# パッケージのインストール
+install.packages(c("twitteR", "base64enc"), dependencies = TRUE)
+# パッケージの読み込み
+library("twitteR")
+# Consumer Key (API Key)，Consumer Secret (API Secret)，Access Token，Access Token Secretの入力（各自の情報を入力してください）
+consumerKey <- "Consumer Key (API Key)"
+consumerSecret <- "Consumer Secret (API Secret)"
+accessToken <- "Access Token"
+accessSecret <- "Access Token Secret"
+# 認証情報を取得
+options(httr_oauth_cache = TRUE)
+setup_twitter_oauth(consumerKey, consumerSecret, accessToken, accessSecret)
+
+# オーム社宣伝課の最新ツイートを10件取得（件数は，引数nで指定）
+ohm.tweets <- userTimeline(user = "ohmsha_pr", n = 10)
+# 取得したツイートを確認
+ohm.tweets
+
+# キーワードを指定
+keyword <- "オーム社"
+# 文字コードを変換（Windowsの場合）
+keyword <- iconv(keyword, to = "UTF-8")
+# 任意の文字列を含むツイートを10件取得（件数は，引数nで指定）
+search.results <- twListToDF(searchTwitter(keyword, n = 10))
+# 取得したツイートを確認
+search.results$text
+
+# 改行を削除（半角スペースに置換）
+search.results.cleaned <- gsub("\\n", " ", search.results$text, perl = TRUE)
+# 改行を削除したデータを確認
+search.results.cleaned
+
+# URLを削除
+search.results.cleaned.2 <- gsub("https?://[a-zA-Z0-9.-~_/%?=;&]+", "", search.results.cleaned, perl = TRUE)
+# URLを削除したデータを確認
+search.results.cleaned.2
+
+# テキストファイルへの書き出し（引数fileEncodingで文字コードを指定）
+write.table(search.results.cleaned.2, "tweets.txt", sep = "\t", col.names = FALSE, fileEncoding = "cp932")
+# ファイルの保存先（ワーキングディレクトリ）を確認
+getwd()
+
+# LinkDataで公開されているデータをRから読み込み
+source("http://linkdata.org/api/1/rdf1s4456i/R")
+# 読み込んだデータのクラスを確認
+class(hometown_donation_comment)
+# 読み込んだデータを確認
+head(hometown_donation_comment)
+# コメント部分だけを抽出
+hometown_donation_comment$コメント
+# 1つ目のコメントだけを抽出
+hometown_donation_comment$コメント[1]
+
+# 文字列を入力
+x <- "あいうえお" ## Mac環境のみで実行
+# 文字コードを確認
+Encoding(x) ## Mac環境のみで実行
+# 文字コードをUTF-8からCP932に変更
+y <- iconv(x, from = "UTF-8", to = "CP932") ## Mac環境のみで実行
+# 文字コードを変更した文字列を確認
+y ## Mac環境のみで実行
+# パッケージの読み込み
+library("rvest") ## Mac環境のみで実行
+# guess_encoding関数で文字化けしている文字列の文字コードを確認
+guess_encoding(y) ## Mac環境のみで実行
+# 文字コードをCP932からUTF-8に変更
+iconv(y, from = "CP932", to = "UTF-8") ## Mac環境のみで実行
+
+# 文字コードをCP932からUTF-8に変更
+iconv(y, from = "CP932", to = "UTF-8")
+
+########## 第4章 ##########
+
+# パッケージのインストール
+install.packages("data.table", dependencies = TRUE)
+# パッケージの読み込み
+library("data.table")
+# CSVファイルの読み込み（spam.csvを選択）
+spam <- fread(file.choose(), header = TRUE, data.table = FALSE, stringsAsFactors = TRUE)
+
+# 読み込んだデータの行数と列数を確認
+dim(spam)
+# 読み込んだデータの列名を確認
+colnames(spam)
+# 読み込んだデータを確認
+head(spam)
+
+# パッケージのインストール
+install.packages("openxlsx", dependencies = TRUE)
+# パッケージの読み込み
+library("openxlsx")
+# Excelファイルの読み込み（spam.xlsxを選択）
+spam.xlsx <- read.xlsx(file.choose(), sheet = 1)
+# 読み込んだデータのクラスを確認
+class(spam.xlsx)
+
+# パッケージの読み込み
+library("RMeCab")
+# RMeCabFreq関数による頻度表の作成（Abe.txtを選択）
+RMeCabFreq.result <- RMeCabFreq(file.choose())
+# 集計結果を確認
+head(RMeCabFreq.result)
+
+# 行の抽出
+# パッケージの読み込み
+library("dplyr")
+# 品詞（info1）が「名詞」の行のみを抽出
+RMeCabFreq.result.nouns <- filter(RMeCabFreq.result, Info1 == "名詞")
+# 抽出した行を確認
+head(RMeCabFreq.result.nouns)
+# 品詞（Info1）が「名詞」もしくは「動詞」の行のみを抽出（ORは「|」でつなぐ）
+RMeCabFreq.result.nouns.verbs <- filter(RMeCabFreq.result, Info1 == "名詞" | Info1 == "動詞")
+# 抽出した行を確認
+head(RMeCabFreq.result.nouns.verbs)
+tail(RMeCabFreq.result.nouns.verbs)
+# 頻度（Freq）が10回以上の行のみを抽出
+RMeCabFreq.result.highfreq <- filter(RMeCabFreq.result, Freq >= 10)
+# 抽出した行を確認
+head(RMeCabFreq.result.highfreq)
+# 頻度（Freq）が3回以下の行のみを抽出
+RMeCabFreq.result.lowfreq <- filter(RMeCabFreq.result, Freq <= 3)
+# 抽出した行を確認
+head(RMeCabFreq.result.lowfreq)
+# 頻度（Freq）が10回以上で「名詞」の行のみを抽出（ANDは「,」でつなぐ）
+RMeCabFreq.result.highfreq.nouns <- filter(RMeCabFreq.result, Freq >= 10, Info1 == "名詞")
+head(RMeCabFreq.result.highfreq.nouns)
+
+# 前段で作成済みのRMeCabFreq.resultを確認
+head(RMeCabFreq.result)
+# TermとFreqの列だけを抽出
+RMeCabFreq.result.subset <- select(RMeCabFreq.result, Term, Freq)
+# 抽出した列を確認
+head(RMeCabFreq.result.subset)
+# Info2の列以外を抽出（削除したい列名にマイナス記号をつける）
+RMeCabFreq.result.subset.2 <- select(RMeCabFreq.result, -Info2)
+# 抽出した列を確認
+head(RMeCabFreq.result.subset.2)
+# Info1とInfo2の列以外を抽出（複数の列を同時に削除する場合は，c関数でまとめる）
+RMeCabFreq.result.subset.3 <- select(RMeCabFreq.result, -c(Info1, Info2))
+# 抽出した列を確認
+head(RMeCabFreq.result.subset.3)
+
+# Infoという文字列で始まる列名を持つ列を抽出（前方一致）
+RMeCabFreq.result.subset.4 <- select(RMeCabFreq.result, starts_with("Info"))
+# 抽出した列を確認
+head(RMeCabFreq.result.subset.4)
+# mという文字で終わる列名を持つ列を抽出（後方一致）
+RMeCabFreq.result.subset.5 <- select(RMeCabFreq.result, ends_with("m"))
+# 抽出した列を確認
+head(RMeCabFreq.result.subset.5)
+# rという文字を含む列名を持つ列を抽出（部分一致）
+RMeCabFreq.result.subset.6 <- select(RMeCabFreq.result, contains("r"))
+# 抽出した列を確認
+head(RMeCabFreq.result.subset.6)
+# 正規表現を用いた列の抽出（アルファベットのみの列名を持つ列を抽出）
+RMeCabFreq.result.subset.7 <- select(RMeCabFreq.result, matches("^[A-Za-z]+$"))
+# 抽出した列を確認
+head(RMeCabFreq.result.subset.7)
+
+# 正規表現を用いた列の抽出（アルファベットのみの列名を持つ列を抽出）
+RMeCabFreq.result.subset.7 <- select(RMeCabFreq.result, matches("^[A-Za-z]+$"))
+# 抽出した列を確認
+head(RMeCabFreq.result.subset.7)
+
+# 分析データの準備
+# パッケージのインストール
+install.packages("textometry", dependencies = TRUE)
+# パッケージの読み込み
+library("textometry")
+library("dplyr")
+# データセットの読み込み
+data(robespierre)
+# データセットを確認
+robespierre
+# データを整形
+# 行列を転置
+robespierre.2 <- t(robespierre)
+# データフレーム形式に変換
+robespierre.3 <- as.data.frame(robespierre.2)
+# othersの列を削除
+robespierre.4 <- select(robespierre.3, -others)
+# 整形済みのデータを確認
+robespierre.4
+
+# deという列の最大値と最小値を計算
+summarise(robespierre.4, max = max(de), min = min(de))
+
+# deという列とpeupleという列のそれぞれの最大値と最小値を計算
+summarise(robespierre.4, de.max = max(de), de.min = min(de), peuple.max = max(peuple), peuple.min = min(peuple))
+
+# すべての列の最大値を計算
+summarise_all(robespierre.4, max)
+# すべての列の最大値と最小値を計算
+summarise_all(robespierre.4, funs(max, min))
+
+# データの要約統計量をまとめて計算
+summary(robespierre.4)
+
+# 分析データの準備
+# パッケージのインストール
+install.packages("ca", dependencies = TRUE)
+# パッケージの読み込み
+library("ca")
+# データセットの読み込み
+data(author)
+# データフレーム形式に変換
+author.df <- as.data.frame(author)
+# データセットを確認
+author.df
+
+# 列を追加
+# パッケージの読み込み
+library("dplyr")
+# 母音の頻度を合計した列を追加
+author.df.2 <- mutate(author.df, vowels = a + e + i + o + u)
+# 処理結果を確認
+author.df.2
+
+# 列名を変更
+# パッケージの読み込み
+library("dplyr")
+# vowelsという列名をvwlに変更
+rename(author.df.2, vwl = vowels)
+
+# パッケージの読み込み
+library("stringr")
+library("tm")
+library("dplyr")
+# 2つの頻度集計表を用意
+# 1つ目のテキストを単語単位で読み込み（Trump.txtを選択）
+Trump <- scan(file.choose(), what = "char", quiet = TRUE)
+# テキストを整形
+Trump.lower <- str_to_lower(Trump)
+Trump.cleaned <- removePunctuation(Trump.lower)
+Trump.cleaned <- removeNumbers(Trump.cleaned)
+not.blank <- which(Trump.cleaned != "")
+Trump.cleaned.2 <- Trump.cleaned[not.blank]
+# 単語の頻度を集計
+Trump.tab <- table(Trump.cleaned.2)
+# データフレーム形式に変換
+Trump.df <- as.data.frame(Trump.tab)
+# 列名を修正
+Trump.df.2 <- rename(Trump.df, Term = Trump.cleaned.2)
+Trump.df.2 <- rename(Trump.df.2, Trump = Freq)
+# 1つ目の頻度集計表を確認
+head(Trump.df.2)
+# 2つ目のテキストを単語単位で読み込み（Hillary.txtを選択）
+Hillary <- scan(file.choose(), what = "char", quiet = TRUE)
+# テキストを整形
+Hillary.lower <- str_to_lower(Hillary)
+Hillary.cleaned <- removePunctuation(Hillary.lower)
+Hillary.cleaned <- removeNumbers(Hillary.cleaned)
+not.blank <- which(Hillary.cleaned != "")
+Hillary.cleaned.2 <- Hillary.cleaned[not.blank]
+# 単語の頻度を集計
+Hillary.tab <- table(Hillary.cleaned.2)
+# データフレーム形式に変換
+Hillary.df <- as.data.frame(Hillary.tab)
+# 列名を修正
+Hillary.df.2 <- rename(Hillary.df, Term = Hillary.cleaned.2)
+Hillary.df.2 <- rename(Hillary.df.2, Hillary = Freq)
+# 2つ目の頻度集計表を確認
+head(Hillary.df.2)
+
+# 2つの頻度集計表を結合
+freq.df <- full_join(Trump.df.2, Hillary.df.2, by = "Term", copy = FALSE)
+# 結合した頻度集計表を確認
+head(freq.df)
+
+# NAを0に置換
+freq.df[is.na(freq.df)] <- 0
+# 結合した頻度集計表を確認
+head(freq.df)
+
+# 結合した頻度集計表を文書ターム行列の形式に変換
+freq.df.2 <- data.frame(freq.df, row.names = 1)
+# 文書ターム行列を確認
+head(freq.df.2)
+
+# 前節で作成済みのfreq.dfを確認
+head(freq.df)
+# 上記のfreq.dfにNAが含まれている場合は，以下のコードを実行
+freq.df[is.na(freq.df)] <- 0
+# トランプの頻度を基準に昇順で並び替え
+arrange(freq.df, Trump)
+# トランプの頻度を基準に降順で並び替え
+arrange(freq.df, desc(Trump))
+# ヒラリーの頻度を基準に昇順で並び替え
+arrange(freq.df, Hillary)
+# ヒラリーの頻度を基準に降順で並び替え
+arrange(freq.df, desc(Hillary))
+
+# 頻度の合計で並び替え
+arrange(freq.df, desc(Trump + Hillary))
+
+# パッケージのインストール
+install.packages("kernlab", dependencies = TRUE)
+# パッケージの読み込み
+library("kernlab")
+library("dplyr")
+# データセットの読み込み
+data(spam)
+# データセットを確認
+head(spam)
+
+# カテゴリー別にmakeの列の平均値と標準偏差を集計
+spam.mean.sd <- summarise(group_by(spam, type), mean = mean(make), sd = sd(make))
+# 集計結果を確認
+spam.mean.sd
+# 集計結果のクラスを確認
+class(spam.mean.sd)
+
+# パッケージのインストール
+install.packages("tibble", dependencies = TRUE)
+# パッケージの読み込み
+library("tibble")
+# tibble形式から従来のデータフレームに変換
+spam.df <- as.data.frame(spam.mean.sd)
+# 変換したデータのクラスを確認
+class(spam.df)
+# 変換したデータフレームの中身を確認
+spam.df
+# 従来のデータフレームからtibble形式に変換
+as_tibble(spam.df)
+
+# spamデータセットのtype以外のすべての列から平均値と標準偏差を集計
+spam.mean.sd.all <- summarise_all(group_by(select(spam, -type)), funs(mean, sd))
+# 集計結果を確認
+spam.mean.sd.all
+
+# tibble形式のデータをすべて表示
+glimpse(spam.mean.sd.all)
+
+# 分析データの準備
+# パッケージの読み込み
+library("ca")
+# データセットの読み込み
+data(author)
+# データフレーム形式に変換
+author.df <- as.data.frame(author)
+# データセットを確認
+head(author.df)
+
+# パッケージの読み込み
+library("tibble")
+# 行名を"text"という列として追加
+author.df.wide <- rownames_to_column(as.data.frame(author), "text")
+# 行名を追加したデータフレームを確認
+head(author.df.wide)
+
+# パッケージのインストール
+install.packages("tidyr", dependencies = TRUE)
+# パッケージの読み込み
+library("tidyr")
+# wide形式からlong形式に変換
+author.df.long <- gather(author.df.wide, key = letters, value = freq, -text)
+# long形式に変換したデータフレームを確認
+head(author.df.long)
+
+# long形式からwide形式に変換
+author.df.wide.2 <- spread(author.df.long, key = letters, value = freq)
+# wide形式に変換したデータフレームを確認
+head(author.df.wide.2)
+
+# textの列に書かれたテキスト名を行ラベルに変換
+data.frame(author.df.wide.2, row.names = 1)
+
+# パッケージの読み込み
+library("stringr")
+library("tm")
+library("dplyr")
+# テキストを単語単位で読み込み（Trump.txtを選択）
+Trump <- scan(file.choose(), what = "char", quiet = TRUE)
+# テキストを整形（パイプ演算子を使用）
+Trump.cleaned <- Trump %>% str_to_lower() %>% removePunctuation() %>% removeNumbers()
+
+# パッケージの読み込み
+library("kernlab")
+library("dplyr")
+# データセットの読み込み
+data(spam)
+# spamデータセットのtype以外のすべての列から平均値を集計（パイプ演算子を使用）
+spam %>% select(-type) %>% group_by() %>% summarise_all(funs(mean))
+
+# spamデータセットのtype以外のすべての列から平均値を集計（入れ子構造で処理）
+spam.mean.all <- summarise_all(group_by(select(spam, -type)), funs(mean))
+
+########## 第5章 ##########
+
+# パッケージの読み込み
+library("data.table")
+# CSVファイルの読み込み（RogueOne.csvを選択）
+RogueOne <- fread(file.choose(), header = TRUE, data.table = FALSE)
+# 読み込んだデータを確認
+head(RogueOne)
+
+# 線形単回帰分析を実行
+RogueOne.lm <- lm(Search.Interest ~ Day, data = RogueOne)
+# 線形単回帰分析の結果を確認
+summary(RogueOne.lm)
+
+# 個々のデータの予測値を計算
+lm.predicted <- predict(RogueOne.lm)
+# 個々のデータの残差を計算
+lm.residuals <- residuals(RogueOne.lm)
+# 元のデータ，予測値，残差を1つにデータフレームに統合
+data.frame(RogueOne, lm.predicted, lm.residuals)
+
+# 散布図を描画
+plot(RogueOne$Day, RogueOne$Search.Interest, pch = 16, col = "grey60")
+# 回帰直線を描画
+abline(RogueOne.lm)
+
+# 回帰診断図を作成
+par(mfrow = c(2, 2))
+plot(RogueOne.lm)
+
+# パッケージのインストール
+install.packages("ggplot2", dependencies = TRUE)
+# パッケージの読み込み
+library("ggplot2")
+# ggplot2パッケージで線形単回帰分析の結果を可視化
+ggplot(data = RogueOne, aes(x = Day, y = Search.Interest)) + geom_point() + stat_smooth(method = "lm")
+
+# ggplot2パッケージで線形単回帰分析の結果を可視化（信頼区間を非表示）
+ggplot(data = RogueOne, aes(x = Day, y = Search.Interest)) + geom_point() + stat_smooth(method = "lm", se = FALSE)
+
+# パッケージのインストール
+install.packages("corpora", dependencies = TRUE)
+# パッケージの読み込み
+library("corpora")
+# データセットの読み込み
+data(BNCbiber)
+# データセットの列名を確認
+colnames(BNCbiber)
+
+# パッケージの読み込み
+library("dplyr")
+library("stringr")
+# 一部の言語項目のみ（f_06からf_11までとf_14，f_16，f_43）を抽出
+BNCbiber.subset <- select(BNCbiber, f_06_first_person_pronouns : f_11_indefinite_pronoun, f_14_nominalization : f_16_other_nouns, f_43_type_token)
+# 抽出したデータの列名を確認
+colnames(BNCbiber.subset)
+# 列名を短縮
+colnames(BNCbiber.subset) <- str_replace(colnames(BNCbiber.subset), "_[a-z_]+", "")
+# 短縮した列名を確認
+colnames(BNCbiber.subset)
+
+# パッケージのインストール
+install.packages("GGally", dependencies = TRUE)
+# パッケージの読み込み
+library("GGally")
+# データの概要を可視化
+ggpairs(BNCbiber.subset)
+
+# 線形重回帰分析を実行
+BNCbiber.lm <- lm(f_43 ~ f_06 + f_07 + f_08 + f_09 + f_10 + f_11 + f_14 + f_15 + f_16, data = BNCbiber.subset)
+# 以下のように省略して書くことも可能
+BNCbiber.lm <- lm(f_43 ~ ., data = BNCbiber.subset)
+# 線形重回帰分析の結果を確認
+summary(BNCbiber.lm)
+
+# 変数選択
+# BNCbiber.lmは本節上段で作成済み
+BNCbiber.step <- step(BNCbiber.lm, direction = "both")
+# 変数選択の結果を確認
+summary(BNCbiber.step)
+
+library("data.table")
+library("dplyr")
+# CSVファイルの読み込み（RogueOne.csvを選択）
+RogueOne <- fread(file.choose(), header = TRUE, data.table = FALSE)
+# LOESS平滑化を実行
+RogueOne.loess <- loess(Search.Interest ~ Day, data = RogueOne) %>% predict()
+# 平滑化の結果を確認
+RogueOne.loess
+
+# 平滑化の幅を指定
+par(mfrow = c(2, 2))
+# span = 0.25
+plot(RogueOne$Day, RogueOne$Search.Interest, pch = 16, col = "grey60", main = "span = 0.25")
+loess(Search.Interest ~ Day, data = RogueOne, span = 0.25) %>% predict() %>% lines()
+# span = 0.5
+plot(RogueOne$Day, RogueOne$Search.Interest, pch = 16, col = "grey60", main = "span = 0.5")
+loess(Search.Interest ~ Day, data = RogueOne, span = 0.5) %>% predict() %>% lines()
+# span = 0.75
+plot(RogueOne$Day, RogueOne$Search.Interest, pch = 16, col = "grey60", main = "span = 0.75")
+loess(Search.Interest ~ Day, data = RogueOne, span = 0.75) %>% predict() %>% lines()
+# span = 1
+plot(RogueOne$Day, RogueOne$Search.Interest, pch = 16, col = "grey60", main = "span = 1")
+loess(Search.Interest ~ Day, data = RogueOne, span = 1) %>% predict() %>% lines()
+
+# パッケージのインストール
+install.packages("bisoreg", dependencies = TRUE)
+# パッケージの読み込み
+library("bisoreg")
+# 交差検証法によるLOESS平滑化を実行
+# RogueOneデータセットは，本節前段で読み込み済み
+set.seed(1)
+RogueOne.loess.cv <- loess.wrapper(RogueOne$Day, RogueOne$Search.Interest, span.vals = seq(0.25, 1, by = 0.05), folds = 4)
+# spanを確認
+RogueOne.loess.cv$par$span
+# 平滑化の結果を可視化
+plot(RogueOne$Day, RogueOne$Search.Interest, pch = 16, col = "grey60")
+RogueOne.loess.cv %>% predict() %>% lines()
+
+# パッケージの読み込み
+library("ggplot2")
+# ggplot2パッケージで線形単回帰分析の結果を可視化
+ggplot(data = RogueOne, aes(x = Day, y = Search.Interest)) + geom_point() + stat_smooth(method = "loess", span = 0.75)
+
+# ggplot2パッケージで平滑化の結果を可視化（信頼区間を非表示）
+ggplot(data = RogueOne, aes(x = Day, y = Search.Interest)) + geom_point() + stat_smooth(method = "loess", span = 0.75, se = FALSE)
+
+# パッケージの読み込み
+library("corpora")
+library("dplyr")
+library("stringr")
+# データセットの読み込み
+data(BNCbiber)
+# 一部の言語項目のみを抽出
+BNCbiber.subset <- select(BNCbiber, f_06_first_person_pronouns : f_11_indefinite_pronoun, f_14_nominalization : f_16_other_nouns, f_43_type_token)
+# 列名を短縮
+colnames(BNCbiber.subset) <- str_replace(colnames(BNCbiber.subset), "_[a-z_]+", "")
+# 短縮した列名を確認
+colnames(BNCbiber.subset)
+
+# パッケージのインストール
+install.packages("glmnet", dependencies = TRUE)
+# パッケージの読み込み
+library("glmnet")
+# 乱数の種を固定
+set.seed(1)
+# L1正則化を実行
+BNCbiber.glmnet <- glmnet(as.matrix(BNCbiber.subset[, -10]), as.matrix(BNCbiber.subset[, 10]), alpha = 1)
+# 推定された偏回帰係数を確認
+coef(BNCbiber.glmnet)
+
+# 正則化パスを描画
+plot(BNCbiber.glmnet)
+
+# 乱数の種を固定
+set.seed(1)
+# L1正則化の交差妥当化を実行
+BNCbiber.glmnet.cv <- cv.glmnet(as.matrix(BNCbiber.subset[, -10]), as.matrix(BNCbiber.subset[, 10]), alpha = 1)
+# 交差妥当化の結果を確認
+BNCbiber.glmnet.cv
+# 最適な罰則の強さを確認
+BNCbiber.glmnet.cv$lambda.min
+# 最適な罰則の強さを持つモデルの係数を確認
+coef(BNCbiber.glmnet.cv, s = BNCbiber.glmnet.cv$lambda.min)
+
+########## 第6章 ##########
+
+# パッケージの読み込み
+library("kernlab")
+# データセットの読み込み
+data(spam)
+# 訓練データと評価データに分割
+# 奇数のベクトルを生成
+n <- seq(1, nrow(spam), by = 2)
+# 奇数行のデータを抽出
+spam.train <- spam[n, ]
+# 偶数行のデータを抽出
+spam.test <- spam[-n, ]
+# 奇数行のデータを確認
+head(spam.train)
+# 偶数行のデータを確認
+head(spam.test)
+
+# パッケージのインストール
+install.packages("class", dependencies = TRUE)
+# パッケージの読み込み
+library("class")
+# 乱数の種を固定
+set.seed(1)
+# k近傍法を実行
+knn.result <- knn(spam.train[, -58], spam.test[, -58], spam.train[, 58], k = 5)
+# k近傍法による予測結果を確認
+head(knn.result)
+
+# 予測の正誤をまとめた表を作成
+(knn.tab <- table(spam.test$type, knn.result))
+# 予測精度の確認（表の対角要素の総数を全要素数で割る）
+sum(diag(knn.tab)) / sum(knn.tab)
+
+# パッケージのインストール
+install.packages("gmodels", dependencies = TRUE)
+# パッケージの読み込み
+library("gmodels")
+# CrossTable関数で予測の正誤をまとめた表を作成
+CrossTable(spam.test$type, knn.result)
+
+# パッケージのインストール
+install.packages("caret", dependencies = TRUE)
+# パッケージの読み込み
+library("caret")
+# 予測結果の正誤に関する様々な指標を確認
+confusionMatrix(knn.result, spam.test$type, positive = "spam")
+
+# 感度の計算
+640 / (640 + 266)
+# 特異度の計算
+1158 / (1158 + 236)
+
+# パッケージのインストール
+install.packages("e1071", dependencies = TRUE)
+# パッケージの読み込み
+library("e1071")
+library("kernlab")
+# データセットの読み込み
+data(spam)
+# 訓練データと評価データに分割
+n <- seq(1, nrow(spam), by = 2)
+spam.train <- spam[n, ]
+spam.test <- spam[-n, ]
+# ナイーブベイズで分類モデルを作成
+nb.model <- naiveBayes(type ~ ., data = spam.train)
+
+# ナイーブベイズで作成した分類モデルを確認
+nb.model
+
+# ナイーブベイズで作成した分類モデルを評価データに適用
+nb.pred <- predict(nb.model, spam.test)
+# ナイーブベイズによる予測結果を確認
+head(nb.pred)
+# 予測の正誤をまとめた表を作成
+(nb.tab <- table(spam.test$type, nb.pred))
+# 予測精度の確認（表の対角要素の総数を全要素数で割る）
+sum(diag(nb.tab)) / sum(nb.tab)
+
+# パッケージのインストール
+install.packages("nnet", dependencies = TRUE)
+# パッケージの読み込み
+library("nnet")
+library("kernlab")
+# データセットの読み込み
+data(spam)
+# 訓練データと評価データに分割
+n <- seq(1, nrow(spam), by = 2)
+spam.train <- spam[n, ]
+spam.test <- spam[-n, ]
+# 乱数の種を固定
+set.seed(1)
+# ニューラルネットワークで分類モデルを作成
+nn.model <- nnet(type ~ ., data = spam.train, size = 3)
+
+# 乱数の種を固定
+set.seed(1)
+# ニューラルネットワークで分類モデルを作成（最適化計算の繰り返し回数を1000回に変更）
+nn.model <- nnet(type ~ ., data = spam.train, size = 3, maxit = 1000)
+
+# ニューラルネットワークで作成した分類モデルを評価データに適用
+nn.pred <- predict(nn.model, spam.test, type = "class")
+# ニューラルネットワークによる予測結果を確認
+head(nn.pred)
+
+# 予測の正誤をまとめた表を作成
+(nn.tab <- table(spam.test$type, nn.pred))
+# 予測精度の確認（表の対角要素の総数を全要素数で割る）
+sum(diag(nn.tab)) / sum(nn.tab)
+
+# パッケージの読み込み
+library("kernlab")
+library("e1071")
+# データセットの読み込み
+data(spam)
+# 訓練データと評価データに分割
+n <- seq(1, nrow(spam), by = 2)
+spam.train <- spam[n, ]
+spam.test <- spam[-n, ]
+# 乱数の種を固定
+set.seed(1)
+# サポートベクターマシンで分類モデルを作成
+svm.model <- svm(type ~ ., type = "C-classification", data = spam.train)
+# サポートベクターマシンで作成した分類モデルを確認
+svm.model
+
+# サポートベクターマシンで作成した分類モデルを評価データに適用
+svm.pred <- predict(svm.model, spam.test, type = "class")
+# サポートベクターマシンによる予測結果を確認
+head(svm.pred)
+
+# 予測の正誤をまとめた表を作成
+(svm.tab <- table(spam.test$type, svm.pred))
+# 予測精度の確認（表の対角要素の総数を全要素数で割る）
+sum(diag(svm.tab)) / sum(svm.tab)
+
+# パッケージの読み込み
+library("data.table")
+library("dplyr")
+# CSVファイルの読み込み（comma.csvを選択）
+comma <- fread(file.choose(), header = TRUE, data.table = FALSE, stringsAsFactors = TRUE)
+# 読み込んだデータの列名を確認
+colnames(comma)
+# 読み込んだデータを確認
+head(comma)
+# 「テキスト」の列を削除
+comma.2 <- select(comma, -テキスト)
+# 「テキスト」の列を削除したデータの列名を確認
+colnames(comma.2)
+
+# パッケージの読み込み
+library("e1071")
+# 乱数の種を固定
+set.seed(1)
+# サポートベクターマシンで分類モデルを作成（交差妥当化）
+svm.model.2 <- svm(作者 ~ ., type = "C-classification", cross = 5, data = comma.2)
+# サポートベクターマシンで作成した分類モデルを確認
+summary(svm.model.2)
+
+# パッケージの読み込み
+library("kernlab")
+library("rpart")
+# データセットの読み込み
+data(spam)
+# 訓練データと評価データに分割
+n <- seq(1, nrow(spam), by = 2)
+spam.train <- spam[n, ]
+spam.test <- spam[-n, ]
+# CARTで分類モデルを作成
+cart.model <- rpart(type ~ ., data = spam.train)
+# CARTで作成した分類モデルを確認（小数点以下第2位までを表示）
+print(cart.model, digit = 1)
+
+# パッケージのインストール
+install.packages("rpart.plot", dependencies = TRUE)
+# パッケージの読み込み
+library("rpart.plot")
+# CARTによる分類モデルの可視化
+prp(cart.model, type = 2, extra = 101, fallen.leaves = TRUE, nn = TRUE)
+
+# CARTで作成した分類モデルを評価データに適用
+cart.pred <- predict(cart.model, spam.test, type = "class")
+# CARTによる予測結果を確認
+head(cart.pred)
+
+# 予測の正誤をまとめた表を作成
+(cart.tab <- table(spam.test$type, cart.pred))
+# 予測精度の確認（表の対角要素の総数を全要素数で割る）
+sum(diag(cart.tab)) / sum(cart.tab)
+
+# パッケージのインストール
+install.packages("adabag", dependencies = TRUE)
+# パッケージの読み込み
+library("kernlab")
+library("adabag")
+# データセットの読み込み
+data(spam)
+# 訓練データと評価データに分割
+n <- seq(1, nrow(spam), by = 2)
+spam.train <- spam[n, ]
+spam.test <- spam[-n, ]
+# 乱数の種を固定
+set.seed(1)
+# バギングで分類モデルを作成
+bag.model <- bagging(type ~ ., data = spam.train)
+
+# バギングで作成した分類モデルを確認
+bag.model
+
+# 説明変数を重要度が大きい順に並び替え
+sort(bag.model$importance, decreasing = TRUE)
+
+# バギングで作成した分類モデルを評価データに適用
+bag.pred <- predict(bag.model, spam.test, type = "class")
+# バギングによる予測結果を確認
+head(bag.pred)
+
+# 予測の正誤をまとめた表を確認
+bag.pred$confusion
+# 予測の不正解率（誤判別率）を確認
+bag.pred$error
+# 予測の正解率（分類精度）を確認（1から不正解率を引く）
+1 - bag.pred$error
+
+# パッケージの読み込み
+library("kernlab")
+library("adabag")
+# データセットの読み込み
+data(spam)
+# 訓練データと評価データに分割
+n <- seq(1, nrow(spam), by = 2)
+spam.train <- spam[n, ]
+spam.test <- spam[-n, ]
+# 乱数の種を固定
+set.seed(1)
+# アダブーストで分類モデルを作成
+boo.model <- boosting(type ~ ., data = spam.train)
+
+# アダブーストで作成した分類モデルを確認
+boo.model
+
+# 説明変数を重要度が大きい順に並び替え
+sort(boo.model$importance, decreasing = TRUE)
+
+# アダブーストで作成した分類モデルを評価データに適用
+boo.pred <- predict(boo.model, spam.test, type = "class")
+# アダブーストによる予測結果を確認
+head(boo.pred$class)
+
+# 予測の正誤をまとめた表を確認
+boo.pred$confusion
+# 予測の不正解率（誤判別率）を確認
+boo.pred$error
+# 予測の正解率（分類精度）を確認（1から不正解率を引く）
+1 - boo.pred$error
+
+# パッケージのインストール
+install.packages("gbm", dependencies = TRUE)
+# パッケージの読み込み
+library("gbm")
+# spam.train（本節上段で作成済み）をコピー
+spam.train.2 <- spam.train
+# spam.train.2のtypeの列を0, 1に変換（as.numericの結果が1, 2となるため，1を引く）
+spam.train.2$type <- as.numeric(spam.train.2$type) - 1
+# 0, 1に変換したtypeの列を確認（table関数で集計）
+table(spam.train.2$type)
+# 乱数の種を固定
+set.seed(1)
+# 勾配ブースティングで分類モデルを作成（生成する決定木の数は100）
+gbm.model <- gbm(type ~ ., data = spam.train.2, distribution = "bernoulli", n.trees = 100)
+
+# パッケージのインストール
+install.packages("pROC", dependencies = TRUE)
+# パッケージの読み込み
+library("pROC")
+# 勾配ブースティングで作成した分類モデルを評価データに適用（spam.testは本節上段で作成済み）
+gbm.pred <- predict(gbm.model, spam.test, n.trees = 100, type = "response")
+# 勾配ブースティングによる予測結果を確認
+head(gbm.pred)
+# ROC曲線の描画
+roc.curve <- roc(response = spam.test$type, predictor = gbm.pred)
+plot(roc.curve, legacy.axes = TRUE)
+
+# AUCを計算
+auc(roc.curve)
+
+# パッケージのインストール
+install.packages("randomForest", dependencies = TRUE)
+# パッケージの読み込み
+library("kernlab")
+library("randomForest")
+# データセットの読み込み
+data(spam)
+# 訓練データと評価データに分割
+n <- seq(1, nrow(spam), by = 2)
+spam.train <- spam[n, ]
+spam.test <- spam[-n, ]
+# 乱数の種を固定
+set.seed(1)
+# ランダムフォレストで分類モデルを作成
+rf.model <- randomForest(type ~ ., data = spam.train)
+# ランダムフォレストで作成した分類モデルを確認
+rf.model
+
+# 個々の説明変数の重要度を可視化
+varImpPlot(rf.model, pch = 16, main = NA)
+
+# 重要度10位までの説明変数の部分従属プロットを描画
+# 描画する説明変数の数を指定
+x <- 10
+# 説明変数の名前を取得
+variable.names <- colnames(spam)
+# 重要度の高い説明変数の番号を取得
+rk <- order(rf.model$importance, decreasing = TRUE)[1 : x]
+# 描画エリアの設定（2行5列で描画）
+par(mfrow = c(2, 5))
+# 部分従属プロットを描画
+for(i in rk) 
+     partialPlot(rf.model, spam, variable.names[i], main = variable.names[i], xlab = variable.names[i], ylab = "Partial Dependency")
+
+# ランダムフォレストで作成した分類モデルを評価データに適用
+rf.pred <- predict(rf.model, spam.test, type = "class")
+# ランダムフォレストによる予測結果を確認
+head(rf.pred)
+
+# 予測の正誤をまとめた表を作成
+(rf.tab <- table(spam.test$type, rf.pred))
+# 予測精度の確認（表の対角要素の総数を全要素数で割る）
+sum(diag(rf.tab)) / sum(rf.tab)
+
+# パッケージの読み込み
+library("data.table")
+# CSVファイルの読み込み（genre.csvを選択）
+genre <- fread(file.choose(), header = TRUE, data.table = FALSE, stringsAsFactors = TRUE)
+# 読み込んだデータの列名を確認
+colnames(genre)
+
+# 読み込んだデータを確認
+head(genre)
+
+# パッケージの読み込み
+library("randomForest")
+# 乱数の種を固定
+set.seed(1)
+# ランダムフォレストで分類モデルを作成
+rf.model.2 <- randomForest(ジャンル ~ ., data = genre)
+# ランダムフォレストで作成した分類モデルを確認
+rf.model.2
+
+########## 第7章 ##########
+
+# パッケージの読み込み
+library("data.table")
+library("dplyr")
+# CSVファイルの読み込み（numbers.csvを選択）
+numbers <- fread(file.choose(), header = TRUE, data.table = FALSE) %>% data.frame(row.names = 1)
+# 読み込んだデータを確認
+numbers
+
+# 個々のデータ間の距離を計算（ユークリッド距離）
+d <- dist(numbers, method = "euclidean")
+# 個々のデータ間の距離を計算した結果（距離行列）を確認
+print(d, digit = 2)
+
+# ウォード法でクラスタリング
+hc <- hclust(d, method = "ward.D2")
+# クラスタリング結果を確認
+hc
+
+# クラスタリング結果を可視化
+plot(hc, hang = -1, main = NA)
+
+# デンドログラムのデータを2〜5つに分割
+par(mfrow = c(2, 2))
+plot(hc, hang = -1, main = "k = 2")
+rect.hclust(hc, k = 2)
+plot(hc, hang = -1, main = "k = 3")
+rect.hclust(hc, k = 3)
+plot(hc, hang = -1, main = "k = 4")
+rect.hclust(hc, k = 4)
+plot(hc, hang = -1, main = "k = 5")
+rect.hclust(hc, k = 5)
+
+# パッケージのインストール
+install.packages("vegan", dependencies = TRUE)
+# パッケージの読み込み
+library("vegan")
+library("dplyr")
+# クラスター数の推定と可視化
+cascadeKM(numbers, 2, 5) %>% plot()
+
+# パッケージのインストール
+install.packages("pvclust", dependencies = TRUE)
+# パッケージの読み込み
+library("pvclust")
+# 乱数の種を固定
+set.seed(1)
+# ブートストラップ法によるクラスターの推定
+options(warn = -1)
+pvclust.result <- pvclust(numbers, method.dist = "correlation", method.hclust = "ward.D2", nboot = 1000)
+# 推定結果の可視化
+plot(pvclust.result)
+pvrect(pvclust.result, alpha = 0.95)
+
+# パッケージの読み込み
+library("ca")
+# データセットの読み込み
+data(author)
+# 乱数の種を固定
+set.seed(1)
+# k-means法を実行（Hartigan-Wong法，クラスター数は2）
+km.2 <- kmeans(author, centers = 2, algorithm = "Hartigan-Wong")
+# k-means法の結果を確認
+km.2
+# k-means法の結果（クラスタリング結果のみ）を確認
+km.2$cluster
+# 各クラスターに含まれるテキストを確認
+tapply(names(km.2$cluster), km.2$cluster, "unique")
+
+# 乱数の種を固定
+set.seed(1)
+# k-means法を実行（Hartigan-Wong法，クラスター数は4）
+km.4 <- kmeans(author, centers = 4, algorithm = "Hartigan-Wong")
+# 各クラスターに含まれるテキストを確認
+tapply(names(km.4$cluster), km.4$cluster, "unique")
+
+# パッケージのインストール
+install.packages("FactoMineR", dependencies = TRUE)
+# パッケージの読み込み
+library("FactoMineR")
+library("ca")
+# データセットの読み込み
+data(author)
+# 主成分分析を実行
+PCA.result <- PCA(author)
+
+# 主成分分析の固有値を確認
+PCA.result$eig
+
+# 主成分分析と階層型クラスター分析を組み合わせた可視化
+HCPC.result <- HCPC(PCA.result, graph = FALSE)
+plot(HCPC.result)
+
+# パッケージのインストール
+install.packages("kohonen", dependencies = TRUE)
+# パッケージの読み込み
+library("data.table")
+library("dplyr")
+library("kohonen")
+# CSVファイルの読み込み（genre.csvを選択）
+genre <- fread(file.choose(), header = TRUE, data.table = FALSE, stringsAsFactors = TRUE)
+# 読み込んだデータの列名を確認
+colnames(genre)
+# 目的変数の列を除外
+genre.2 <- select(genre, -ジャンル)
+# 乱数の種を固定
+set.seed(1)
+# 出力層の列数（xdim）と行数（ydim），ユニットの配列方法（topo）を指定
+# ユニットの配列方法として，蜂の巣状（hexa）を指定
+grid <- somgrid(xdim = 4, ydim = 4, topo = "hexa")
+# 自己組織化マップを実行
+som.result <- som(as.matrix(genre.2), grid = grid)
+
+# 分類された個々のデータを行番号で表示
+plot(som.result, type = "mapping", labels = 1 : nrow(genre.2))
+
+# 目的変数の列を数値に変換
+n <- as.numeric(genre[, 8])
+# 分類されたデータを異なる形と色で表示
+plot(som.result, type = "mapping", pch = n, col = n)
+
+# パッケージのインストール
+devtools::install_github("bmschmidt/wordVectors")
+install.packages("tsne", dependencies = TRUE)
+# パッケージの読み込み
+library("wordVectors")
+library("tsne")
+# 前処理を実行（Reuter.txtを選択）
+prep_word2vec(origin = file.choose(), destination = "cleaned.txt", lowercase = TRUE)
+
+# 単語の分散表現を学習
+train_word2vec(train_file = "cleaned.txt", output_file = "model.txt", vectors = 200, threads = 3, window = 10)
+
+# 学習したモデルの読み込み
+word2vec.model <- read.vectors("model.txt", binary = TRUE)
+# 学習したモデルを確認
+word2vec.model
+
+# 単語の類似度を可視化
+plot(word2vec.model)
+
+# 特定の単語と最も類似する単語を10個ずつ表示
+nearest_to(word2vec.model, vector = word2vec.model[["crude"]], n = 10)
+nearest_to(word2vec.model, vector = word2vec.model[["oil"]], n = 10)
+
+# 2つの単語の類似度を計算
+cosineSimilarity(word2vec.model[["oil"]], word2vec.model[["crude"]])
+
+# パッケージのインストール
+install.packages("lda", dependencies = TRUE)
+# パッケージの読み込み
+library("lda")
+library("stringr")
+library("dplyr")
+library("tm")
+# テキストを小文字に変換して読み込み（Reuter.txtを選択）
+Reuter <- scan(file.choose(), what = "char", sep = "\n", quiet = TRUE) %>% str_to_lower()
+# 単語ベクトルの作成
+Reuter.word.vector <- Reuter %>% strsplit("([^-a-z0-9]+|--)") %>% unlist()
+# 数字，句読点，ストップワードを削除し，語幹処理を実行
+Reuter.cleaned <- Reuter.word.vector %>% removeNumbers() %>% removePunctuation() %>% removeWords(stopwords("english")) %>% stemDocument()
+
+# LDA用のデータ形式に変換
+lex <- lexicalize(Reuter.cleaned)
+# LDA用のデータを確認
+summary(lex)
+
+# トピックの数を指定
+k = 2
+# LDAを実行
+lda.result <- lda.collapsed.gibbs.sampler(lex$documents, K = k, lex$vocab, num.iterations = 300, alpha = 0.2, eta = 0.2)
+
+# それぞれのトピックを特徴づける単語を抽出
+top.words <- top.topic.words(lda.result$topics, 100, by.score = TRUE)
+head(top.words)
+
+# パッケージの読み込み
+library("RMeCab")
+# RMeCabTextで形態素解析（Abe.txtを選択）
+RMeCabText.result <- RMeCabText(file.choose())
+# 形態素解析結果から名詞だけを抽出
+word.vector.jp <- NULL
+for(i in 1 : length(RMeCabText.result)) {
+    if (RMeCabText.result[[i]][2] %in% "名詞") {
+        word.vector.jp <- c(word.vector.jp, RMeCabText.result[[i]][1])
+    }
+}
+# LDA用のデータ形式に変換
+lex.jp <- lexicalize(word.vector.jp)
+# LDA用のデータを確認
+summary(lex.jp)
+# トピックの数を指定
+k = 2
+# LDAを実行
+lda.result.2 <- lda.collapsed.gibbs.sampler(lex.jp$documents, K = k, lex.jp$vocab, num.iterations = 300, alpha = 0.5, eta = 0.1)
+# それぞれのトピックを特徴づける単語を抽出
+top.words.jp <- top.topic.words(lda.result.2$topics, 100, by.score = TRUE)
+head(top.words.jp)
+
+# パッケージの読み込み
+library("tm")
+library("dplyr")
+library("stringr")
+library("topicmodels")
+# 分析対象とするテキスト（のみ）が入ったフォルダのパスを指定
+dir <- "/Users/User/Documents/US_speeches"
+# フォルダ内のテキストすべてをコーパスとして指定
+corpus <- Corpus(DirSource(dir, encoding = "UTF-8"), readerControl = list(language = "en"))
+# テキストを整形
+corpus.cleaned <- corpus %>% tm_map(str_to_lower) %>% tm_map(removePunctuation) %>% tm_map(removeNumbers) %>% tm_map(removeWords, stopwords("english")) %>% tm_map(stemDocument, language = "english") %>% tm_map(stripWhitespace)
+# 文書ターム行列の作成
+dtm <- DocumentTermMatrix(corpus.cleaned)
+# トピックの数を指定
+k = 3
+# LDAを実行
+lda.result.3 <- LDA(dtm, k)
+# それぞれのトピックを特徴づける単語を抽出
+terms(lda.result.3, 10)
+
+# 各トピックに各単語が出現する確率（事後生起確率）を確認
+posterior(lda.result.3)[[1]]
+# 各文書における各トピックの比率を確認
+posterior(lda.result.3)[[2]]
+
+# パッケージのインストール
+
+install.packages("topicmodels", dependencies = TRUE)
+# パッケージの読み込み
+library("RMeCab")
+library("dplyr")
+library("tm")
+library("topicmodels")
+# 分析対象とするテキスト（のみ）が入ったフォルダのパスを指定
+dir.2 <- "/Users/User/Documents/JP_speech"
+# 文書ターム行列の作成
+docDF.result <- docDF(dir.2, type = 1)
+# 名詞（一般）のみを抽出
+docDF.result.2 <- docDF.result %>% filter(POS1 == "名詞") %>% filter(POS2 == "一般") %>% select(-c(POS1, POS2)) %>% data.frame(row.names = 1)
+# データのクラスをDocumentTermMatrixに変換
+dtm.2 <- docDF.result.2 %>% t() %>% as.DocumentTermMatrix (weighting = weightTf)
+# トピックの数を指定
+k = 3
+# LDAを実行
+lda.result.4 <- LDA(dtm.2, k)
+# それぞれのトピックを特徴づける単語を抽出
+terms(lda.result.4, 10)
+# 各トピックに各単語が出現する確率（事後生起確率）を確認
+posterior(lda.result.4)[[1]]
+# 各文書における各トピックの比率を確認
+posterior(lda.result.4)[[2]]
