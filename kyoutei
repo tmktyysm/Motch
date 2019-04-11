@@ -1,12 +1,18 @@
-##出走データ抽出
+##住之江競艇専用
+day= readline("Date=")
+racelist= "http://www.boatrace.jp/owpc/pc/race/racelist?rno=%d&jcd=12"
+racelist= paste(racelist,"&hd=", sep="")
+racelist= paste(racelist,day,sep="")
+
 ##出走データ＋オッズデータバインド
 library(rvest)
 library(pforeach)
 
+##出走データ抽出
 npforeach(i=1:12, .c=rbind)({
   cat(i,"\n")
-  url<- sprintf("http://www.boatrace.jp/owpc/pc/race/racelist?rno=%d&jcd=08&hd=20180210",i) ##%dを忘れないように
-  Sys.sleep(3)
+  url<- sprintf(racelist,i) ##%dを忘れないように
+  Sys.sleep(1)
   html <- read_html(url)
   r3<-html_table(html, fill=TRUE)
   r3<-data.frame(r3)
@@ -14,14 +20,14 @@ npforeach(i=1:12, .c=rbind)({
   r3<- r3[,15:38]
   r3<- r3[,c(-2,-9,-10,-11,-12,-13,-14,-15,-16,-17,-18,-19,-20,-21,-22,-23,-24)]
 })-> result
-  result<- result[c(-1,-8,-15,-22,-29,-36,-43,-50,-57,-64,-71,-78),]
+result<- result[c(-1,-8,-15,-22,-29,-36,-43,-50,-57,-64,-71,-78),]
 
 
-##データ成型
 library(stringr)
 library(dplyr)
-test<- cbind(
-  race_id=race_id,
+raceid<- paste(day,race_id,sep="_")
+test111<- cbind(
+  race_id=raceid,
   course= result$枠,
   number=substr(result$ボートレーサー.1,1,4),
   rank=substr(result$ボートレーサー.1,38,39),
@@ -33,7 +39,7 @@ test<- cbind(
   national_2ren=substr(result$全国,31,35),
   national_3ren=substr(result$全国,62,66),
   local_win=substr(result$当地,1,4),
-  local_ren=substr(result$当地,31,35),
+  local_2ren=substr(result$当地,31,35),
   local_3ren=substr(result$当地,62,66),
   motor_num=substr(result$モーター,1,2),
   motor_2ren=substr(result$モーター,28,33),
@@ -42,32 +48,39 @@ test<- cbind(
   boat_2ren=substr(result$ボート,28,33),
   boat_3ren=substr(result$ボート,59,64)
 )
-test<- data.frame(test)
-test$race_id<- as.integer(as.character(test$race_id))
-test$course<- as.character(test$course)
-test$number<- as.integer(as.character(test$number))
-test$rank<- as.character(test$rank)
-test$age<- as.integer(as.character(test$age))
-test$ave_st<- as.numeric(as.character(test$ave_st))
-test$national_win<-as.numeric(as.character(test$national_win))
-test$national_2ren<- as.numeric(as.character(test$national_2ren))
-test$national_3ren<- as.numeric(as.character(test$national_3ren))
-test$local_win<-as.numeric(as.character(test$local_win))
-test$local_ren<-as.numeric(as.character(test$local_ren))
-test$local_3ren<-as.numeric(as.character(test$local_3ren))
-test$motor_num<-as.integer(as.character(test$motor_num))
-test$motor_2ren<-as.numeric(as.character(test$motor_2ren))
-test$motor_3ren<-as.numeric(as.character(test$motor_3ren))
-test$boat_num<- as.integer(as.character(test$boat_num))
-test$boat_2ren<- as.numeric(as.character(test$boat_2ren))
-test$boat_3ren<- as.numeric(as.character(test$boat_3ren))
+test111<- data.frame(test111)
+test111$race_id<- as.character(test111$race_id)
+test111$course<- as.character(test111$course)
+test111$number<- as.integer(as.character(test111$number))
+test111$rank<- as.character(test111$rank)
+test111$age<- as.integer(as.character(test111$age))
+test111$ave_st<- as.numeric(as.character(test111$ave_st))
+test111$national_win<-as.numeric(as.character(test111$national_win))
+test111$national_2ren<- as.numeric(as.character(test111$national_2ren))
+test111$national_3ren<- as.numeric(as.character(test111$national_3ren))
+test111$local_win<-as.numeric(as.character(test111$local_win))
+test111$local_2ren<-as.numeric(as.character(test111$local_2ren))
+test111$local_3ren<-as.numeric(as.character(test111$local_3ren))
+test111$motor_num<-as.integer(as.character(test111$motor_num))
+test111$motor_2ren<-as.numeric(as.character(test111$motor_2ren))
+test111$motor_3ren<-as.numeric(as.character(test111$motor_3ren))
+test111$boat_num<- as.integer(as.character(test111$boat_num))
+test111$boat_2ren<- as.numeric(as.character(test111$boat_2ren))
+test111$boat_3ren<- as.numeric(as.character(test111$boat_3ren))
+
 ##データ付加
-test<- left_join(test, player, by="number")
-test[is.na(test)] <- 0
-course_win<- test[,32]*course[,1]+test[,33]*course[,2]+test[,34]*course[,3]+test[,35]*course[,4]+test[,36]*course[,5]+test[,37]*course[,6]
-Course_1<- test[,40]*course[,1]+test[,42]*course[,2]+test[,44]*course[,3]+test[,46]*course[,4]+test[,48]*course[,5]+test[,50]*course[,6]
-Course_2<- test[,41]*course[,1]+test[,43]*course[,2]+test[,45]*course[,3]+test[,47]*course[,4]+test[,49]*course[,5]+test[,51]*course[,6]
-test5<- cbind(test, course_win,Course_1, Course_2)
+test111<- left_join(test111, player, by="number")
+test111[is.na(test111)] <- 0.25
+course_win_rate<- test111[,31]*course[,1]+test111[,32]*course[,2]+test111[,33]*course[,3]+test111[,34]*course[,4]+test111[,35]*course[,5]+test111[,36]*course[,6]
+course_start_ave<- test111[,37]*course[,1]+test111[,38]*course[,2]+test111[,39]*course[,3]+test111[,40]*course[,4]+test111[,41]*course[,5]+test111[,42]*course[,6]
+course_start_result<- test111[,43]*course[,1]+test111[,44]*course[,2]+test111[,45]*course[,3]+test111[,46]*course[,4]+test111[,47]*course[,5]+test111[,58]*course[,6]
+course_1st_result<-test111[,55]*course[,1]+test111[,61]*course[,2]+test111[,67]*course[,3]+test111[,73]*course[,4]+test111[,79]*course[,5]+test111[,85]*course[,6]
+course_2nd_result<-test111[,56]*course[,1]+test111[,62]*course[,2]+test111[,68]*course[,3]+test111[,74]*course[,4]+test111[,80]*course[,5]+test111[,86]*course[,6]
+course_3rd_result<-test111[,57]*course[,1]+test111[,63]*course[,2]+test111[,69]*course[,3]+test111[,75]*course[,4]+test111[,81]*course[,5]+test111[,87]*course[,6]
+course_4th_result<-test111[,58]*course[,1]+test111[,64]*course[,2]+test111[,70]*course[,3]+test111[,76]*course[,4]+test111[,82]*course[,5]+test111[,88]*course[,6]
+course_5th_result<-test111[,59]*course[,1]+test111[,65]*course[,2]+test111[,71]*course[,3]+test111[,77]*course[,4]+test111[,83]*course[,5]+test111[,89]*course[,6]
+course_6th_result<-test111[,60]*course[,1]+test111[,66]*course[,2]+test111[,72]*course[,3]+test111[,78]*course[,4]+test111[,84]*course[,5]+test111[,90]*course[,6]
+test112<- cbind(test111, course_win_rate, course_start_ave, course_start_result, course_1st_result, course_2nd_result, course_3rd_result,course_4th_result, course_5th_result, course_6th_result)
 
 
 ##正規化
@@ -76,7 +89,7 @@ racewiseFeature <-c("ave_st",
                     "national_2ren",
                     "national_3ren",
                     "local_win",
-                    "local_ren",
+                    "local_2ren",
                     "local_3ren",
                     "motor_2ren",
                     "motor_3ren",
@@ -89,68 +102,94 @@ racewiseFeature <-c("ave_st",
                     "win_number",
                     "win2_number",
                     "startaverage",
-                    "course1",
-                    "course_win",
-                    "Course_1",
-                    "Course_2")
+                    "course_win_rate",
+                    "course_start_ave",
+                    "course_start_result",
+                    "course_1st_result",
+                    "course_2nd_result",
+                    "course_3rd_result",
+                    "course_4th_result",
+                    "course_5th_result",
+                    "course_6th_result")
 
-splited.allData <- split(test5,test5$race_id)
+splited.allData <- split(test112,test112$race_id)
 
 scaled.test <-  do.call("rbind",
-   lapply(splited.allData,
-     function(rw) {
-       data.frame(
-         race_id= rw$race_id,
-         course=rw$course,
-         number=rw$number,
-         rank=rw$rank,
-         age.x=rw$age.x,
-         motor_num=rw$motor_num,
-         boat_num=rw$boat_num,
-         sex=rw$sex,
-         height=rw$height,
-         weight=rw$weight,
-         round=rw$round,
-         scale(rw[,racewiseFeature])#ここで正規化している
-         ) 
-     })
-  )
- 
- scaled.test<- scaled.test[,c(-1)]
- scaled.test$number<- as.integer(scaled.test$number)
- scaled.test$course<- as.integer(scaled.test$course)
- scaled.test$motor_num<- as.integer(scaled.test$motor_num) 
- scaled.test$boat_num<- as.integer(scaled.test$boat_num)
- scaled.test$rank<- as.integer(scaled.test$rank)
- 
- is.nan.df <- function(x) do.call(cbind, lapply(x, is.nan))
- scaled.test[is.nan.df(scaled.test)] <- 0
- scaled.test[is.na(scaled.test)] <- 0
- scaled.test5<- mutate(scaled.test, result=0)
- 
-##odds付加
- library(randomForest)
- odds_pred<- predict(odds_rf, newdata=scaled.test)
- odds_pred<- data.frame(odds_pred)
- scaled.test<- cbind(scaled.test,odds_pred[,1])
- names(scaled.test)[33]<- "odd"
- scaled.test5<- mutate(scaled.test, result=0)
-##xgboostを使用した予測
+                        lapply(splited.allData,
+                               function(rw) {
+                                 data.frame(
+                                   race_id= rw$race_id,
+                                   course=rw$course,
+                                   number=rw$number,
+                                   rank=rw$rank,
+                                   age.x=rw$age.x,
+                                   sex=rw$sex,
+                                   height=rw$height,
+                                   weight=rw$weight,
+                                   round=rw$round,
+                                   scale(rw[,racewiseFeature])#ここで正規化している
+                                 ) 
+                               })
+)
+
+scaled.test<- scaled.test[,c(-1)]
+scaled.test$number<- as.integer(scaled.test$number)
+scaled.test$course<- as.integer(scaled.test$course)
+scaled.test$rank<- as.integer(scaled.test$rank)
+
+is.nan.df <- function(x) do.call(cbind, lapply(x, is.nan))
+scaled.test[is.nan.df(scaled.test)] <- 0
+scaled.test[is.na(scaled.test)] <- 0
+
+##caret,xgboostを利用した予測
+library(caret)
 library(xgboost)
 library(Matrix)
-
-#test data読み込みmatrix化
-scaled.test5$result<- as.integer(scaled.test5$result)
-test_label<- scaled.test5$result
-test<- scaled.test[,-34]
+test<- scaled.test
 test<- as.matrix(test)
-dtest<- xgboost::xgb.DMatrix(test, label= test_label)
+dtest<- xgboost::xgb.DMatrix(test)
 
-##予測結果出力
-test_pred<- predict(xgb2, newdata = dtest)
-test_pred <- ifelse (test_pred > 0.5,1,0)
-test_pred2<- predict(bst2, newdata = dtest)
-test_pred2<- test_pred2*100
-test_pred2<-  matrix(test_pred2,2,length(test_pred2)/2)
-test_pred2 <- t(test_pred2) %>% as.data.frame()
-cbind(test_bind$course,scaled.test5$odd,test_pred,test_pred2) %>%  View()
+test_pred<- predict(xgb_fit, newdata=scaled.test)
+test_pred2<- predict(xgb_fit2, newdata=scaled.test)
+test_pred3<- predict(xgb_fit3, newdata=scaled.test)
+test_pred4<- predict(xgb_fit4, newdata=scaled.test) 
+test_pred5<- predict(xgb_fit5, newdata=scaled.test) 
+test_pred6<- predict(xgb_fit6, newdata=scaled.test) 
+test_pred7<- predict(bst2, newdata = dtest)
+test_pred7<- test_pred7*100
+test_pred7<-  matrix(test_pred7,3,length(test_pred7)/3) %>% round(digits=2)
+test_pred7 <- t(test_pred7)
+test_pred8<- predict(bst3, newdata = dtest)
+test_pred8<- test_pred8*100
+test_pred8<-  matrix(test_pred8,2,length(test_pred8)/2) %>% round(digits=2)
+test_pred8 <- t(test_pred8)
+result_bind<- cbind(scaled.test$course,test_pred,test_pred2,test_pred3, test_pred4, test_pred5, test_pred6,test_pred7, test_pred8)
+row.names(result_bind)<- row.names(scaled.test)
+colnames(result_bind)<- c("コース","fit","fit2","fit3","fit4","fit5","fit6","1位確率","2-3位確率","4-6位確率","1位確率","2-6位確率")
+View(result_bind)
+
+
+##結果検証
+result_list="https://www.boatrace.jp/owpc/pc/race/raceresult?rno=%d&jcd="
+result_list= paste(result_list,place,sep="")
+result_list= paste(result_list,"&hd=", sep="")
+result_list= paste(result_list,day,sep="")
+npforeach(i=1:12, .c=rbind)({
+  cat(i,"\n")
+  url<-sprintf(result_list,i)
+  Sys.sleep(1)
+  html <- read_html(url)
+  li_nodes <- html %>% html_nodes(xpath='/html/body/main/div/div/div/div[2]/div[4]/div/div/table/tbody')
+  name <- li_nodes %>% html_nodes(xpath = "tr") %>% html_text %>% iconv("utf8", "cp932")
+  a<- data.frame(name=name[-(7:12)])
+})-> result3
+
+result1=substr(result3[,1],1,2)
+result2=substr(result3[,1],37,38)
+result_sort<- paste(raceid,result2,sep="_")
+result=cbind(result1, result2, result_sort)%>% data.frame
+colnames(result)<- c("コース","結果","sort")
+result=arrange(result, result$sort)
+result_assess<- cbind(result_bind,result[,1])
+row.names(result_assess)<- row.names(scaled.test)
+View(result_assess)
