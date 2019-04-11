@@ -1,0 +1,195 @@
+days<- nrow(suminoe2018)
+for (i in 1:days){
+day= suminoe2018[i,1]
+
+racelist= "http://www.boatrace.jp/owpc/pc/race/racelist?rno=%d&jcd=12&hd="
+racelist= paste(racelist,day,sep="")
+odds_list="https://www.boatrace.jp/owpc/pc/race/oddstf?rno=%d&jcd=12&hd="
+odds_list= paste(odds_list,day,sep="")
+result_list="https://www.boatrace.jp/owpc/pc/race/raceresult?rno=%d&jcd=12&hd="
+result_list= paste(result_list,day,sep="")
+result_save=paste(day,".csv", sep="")
+
+##出走データ＋オッズデータバインド
+library(rvest)
+library(pforeach)
+
+##出走データ抽出
+npforeach(i=1:12, .c=rbind)({
+  cat(i,"\n")
+  url<- sprintf(racelist,i) ##%dを忘れないように
+  Sys.sleep(1)
+  html <- read_html(url)
+  r3<-html_table(html, fill=TRUE)
+  r3<-data.frame(r3)
+  r3<- r3[c(-2,-4,-5,-6,-8,-9,-10,-12,-13,-14,-16,-17,-18,-20,-21,-22, -24,-25,-26), ]
+  r3<- r3[,15:38]
+  r3<- r3[,c(-2,-9,-10,-11,-12,-13,-14,-15,-16,-17,-18,-19,-20,-21,-22,-23,-24)]
+})-> result
+  result<- result[c(-1,-8,-15,-22,-29,-36,-43,-50,-57,-64,-71,-78),]
+
+  ##オッズデータ抽出
+npforeach(i=1:12, .c=rbind)({
+  cat(i,"\n")
+  url<-sprintf(odds_list,i)
+  Sys.sleep(1)
+  html <- read_html(url)
+  li_nodes <- html %>% html_nodes(xpath='/html/body/main/div/div/div/div[2]/div[5]/div/div[2]/table/tbody')
+  name <- li_nodes %>% html_nodes(xpath = "tr") %>% html_text %>% iconv("utf8", "cp932")
+  a<- data.frame(name=name[-(7:12)])
+})-> result2
+
+
+##結果データ抽出
+npforeach(i=1:12, .c=rbind)({
+  cat(i,"\n")
+  url<-sprintf(result_list,i)
+  Sys.sleep(1)
+  html <- read_html(url)
+  li_nodes <- html %>% html_nodes(xpath='/html/body/main/div/div/div/div[2]/div[4]/div/div/table/tbody')
+  name <- li_nodes %>% html_nodes(xpath = "tr") %>% html_text %>% iconv("utf8", "cp932")
+  a<- data.frame(name=name[-(7:12)])
+})-> result3
+ 
+result4=substr(result3[,1],1,2)
+result5=substr(result3[,1],37,38)
+result_sort<- paste(raceid,result5,sep="_")
+result3=cbind(result4, result5, result_sort)%>% data.frame
+colnames(result3)<- c("コース","結果","sort")
+result3=arrange(result3, result3$sort)
+
+result<- cbind(result, result2, result3)
+
+
+##データ成型
+library(stringr)
+library(dplyr)
+raceid<- paste(day,race_id,sep="_")
+test<- cbind(
+  race_id=raceid,
+  course= result$枠,
+  number=substr(result$ボートレーサー.1,1,4),
+  rank=substr(result$ボートレーサー.1,38,39),
+  age= substr(result$ボートレーサー.1, 
+              str_locate(result$ボートレーサー.1,"歳")-2,
+              str_locate(result$ボートレーサー.1,"歳")-1),
+  ave_st=substr(result$ボートレーサー.2,57,60),
+  national_win=substr(result$全国,1,4),
+  national_2ren=substr(result$全国,31,35),
+  national_3ren=substr(result$全国,62,66),
+  local_win=substr(result$当地,1,4),
+  local_ren=substr(result$当地,31,35),
+  local_3ren=substr(result$当地,62,66),
+  motor_num=substr(result$モーター,1,2),
+  motor_2ren=substr(result$モーター,28,33),
+  motor_3ren=substr(result$モーター,59,64),
+  boat_num=substr(result$ボート,1,2),
+  boat_2ren=substr(result$ボート,28,33),
+  boat_3ren=substr(result$ボート,59,64),
+  odds=substr(result[,8],76,79),
+  result=substr(result[,9],37,38)
+)
+test<- data.frame(test)
+test$race_id<- as.character(test$race_id)
+test$course<- as.character(test$course)
+test$number<- as.integer(as.character(test$number))
+test$rank<- as.character(test$rank)
+test$age<- as.integer(as.character(test$age))
+test$ave_st<- as.numeric(as.character(test$ave_st))
+test$national_win<-as.numeric(as.character(test$national_win))
+test$national_2ren<- as.numeric(as.character(test$national_2ren))
+test$national_3ren<- as.numeric(as.character(test$national_3ren))
+test$local_win<-as.numeric(as.character(test$local_win))
+test$local_ren<-as.numeric(as.character(test$local_ren))
+test$local_3ren<-as.numeric(as.character(test$local_3ren))
+test$motor_num<-as.integer(as.character(test$motor_num))
+test$motor_2ren<-as.numeric(as.character(test$motor_2ren))
+test$motor_3ren<-as.numeric(as.character(test$motor_3ren))
+test$boat_num<- as.integer(as.character(test$boat_num))
+test$boat_2ren<- as.numeric(as.character(test$boat_2ren))
+test$boat_3ren<- as.numeric(as.character(test$boat_3ren))
+test$odds<- as.numeric(as.character(test$odds))
+test$result<- gsub("転","６", test$result)
+test$result<- gsub("妨","６", test$result)
+test$result<- gsub("エ","６", test$result) 
+test$result<- as.character(test$result)
+
+setwd("C:/R/kyoutei/ver2")
+write.csv(test,result_save, row.names = F)
+}
+
+##データ付加
+test<- left_join(test, player, by="number")
+test[is.na(test)] <- 0.25
+course_win_rate<- test[,31]*course[,1]+test[,32]*course[,2]+test[,33]*course[,3]+test[,34]*course[,4]+test[,35]*course[,5]+test[,36]*course[,6]
+course_start_ave<- test[,37]*course[,1]+test[,38]*course[,2]+test[,39]*course[,3]+test[,40]*course[,4]+test[,41]*course[,5]+test[,42]*course[,6]
+course_start_result<- test[,43]*course[,1]+test[,44]*course[,2]+test[,45]*course[,3]+test[,46]*course[,4]+test[,47]*course[,5]+test[,58]*course[,6]
+course_1st_result<-test[,55]*course[,1]+test[,61]*course[,2]+test[,67]*course[,3]+test[,73]*course[,4]+test[,79]*course[,5]+test[,85]*course[,6]
+course_2nd_result<-test[,56]*course[,1]+test[,62]*course[,2]+test[,68]*course[,3]+test[,74]*course[,4]+test[,80]*course[,5]+test[,86]*course[,6]
+course_3rd_result<-test[,57]*course[,1]+test[,63]*course[,2]+test[,69]*course[,3]+test[,75]*course[,4]+test[,81]*course[,5]+test[,87]*course[,6]
+course_4th_result<-test[,58]*course[,1]+test[,64]*course[,2]+test[,70]*course[,3]+test[,76]*course[,4]+test[,82]*course[,5]+test[,88]*course[,6]
+course_5th_result<-test[,59]*course[,1]+test[,65]*course[,2]+test[,71]*course[,3]+test[,77]*course[,4]+test[,83]*course[,5]+test[,89]*course[,6]
+course_6th_result<-test[,60]*course[,1]+test[,66]*course[,2]+test[,72]*course[,3]+test[,78]*course[,4]+test[,84]*course[,5]+test[,90]*course[,6]
+test5<- cbind(test, course_win_rate, course_start_ave, course_start_result, course_1st_result, course_2nd_result, course_3rd_result,course_4th_result, course_5th_result, course_6th_result)
+
+
+
+##testデータ
+racewiseFeature <-c("ave_st",
+                    "national_win",
+                    "national_2ren",
+                    "national_3ren",
+                    "local_win",
+                    "local_2ren",
+                    "local_3ren",
+                    "motor_2ren",
+                    "motor_3ren",
+                    "boat_2ren",
+                    "boat_3ren",
+                    "win_rate",
+                    "X2win_rate",
+                    "X1st_number",
+                    "X2nd_number",
+                    "win_number",
+                    "win2_number",
+                    "startaverage",
+                    "course_win_rate",
+                    "course_start_ave",
+                    "course_start_result",
+                    "course_1st_result",
+                    "course_2nd_result",
+                    "course_3rd_result",
+                    "course_4th_result",
+                    "course_5th_result",
+                    "course_6th_result")
+
+splited.allData <- split(suminoe,suminoe$race_id)
+
+scaled.test <-  do.call("rbind",
+   lapply(splited.allData,
+     function(rw) {
+       data.frame(
+         race_id= rw$race_id,
+         course=rw$course,
+         number=rw$number,
+         rank=rw$rank,
+         age.x=rw$age.x,
+         sex=rw$sex,
+         height=rw$height,
+         weight=rw$weight,
+         round=rw$round,
+         scale(rw[,racewiseFeature]),#ここで正規化している
+         odd=rw$odd,
+         result=rw$result8) 
+     })
+  )
+ 
+ scaled.test<- scaled.test[,c(-1)]
+ scaled.test$number<- as.integer(scaled.test$number)
+ scaled.test$course<- as.integer(as.character(scaled.test$course))
+ scaled.test$rank<- as.integer(scaled.test$rank)
+ scaled.test$result<- as.factor(as.integer(scaled.test$result))
+ 
+ is.nan.df <- function(x) do.call(cbind, lapply(x, is.nan))
+ scaled.test[is.nan.df(scaled.test)] <- 0
+ scaled.test[is.na(scaled.test)] <- 0
