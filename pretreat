@@ -6,9 +6,11 @@ for (column in colnames(b)){
   }
 }
 
+#欠損値カウント
+na_count_train <- sapply(train3, function(x) sum(is.na(x)))
 
 #欠損値処理
-total2_join[is.na(total2_join)] <- 0
+scaled.train[is.na(scaled.train)] <- 0
 
 as.numeric(as.character(size)) ##factorをnumericに変換
 
@@ -52,5 +54,18 @@ a<- mutate(データセット名,新列名＝導入条件)
 write.table(table,"kyoutei_scray.csv", col.names = F, row.names = F)
 
 
-##factor level adjust
+##動的にファイルを読み込む
 x <- factor(x, levels=levels(y))
+
+
+files  <- list.files()    # 現在の作業ディレクトリのファイル一覧を代入
+
+c<- data.frame()    #  dataframeの用意
+for (file.name in files) {
+   setwd("C:/R/kyoutei/ver2/2018")
+    if (regexpr('\\.csv$', file.name)  < 0) { # ファイル名の最後が '.txt'か？
+        next                                 # そうでなければスキップ．
+    }
+    d <- read.csv (file.name, header = TRUE, sep=",")  # ファイルをデータファイルに読み込む
+    c<- rbind(c,d)
+}
