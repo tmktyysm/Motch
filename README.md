@@ -1,21 +1,188 @@
-```txt
-npm install
-npm run dev
+# パン・洋菓子レシピ動画＆材料発注サイト
+
+## プロジェクト概要
+
+- **名称**: パン・洋菓子レシピ動画＆材料発注サイト
+- **目的**: パンや洋菓子のレシピを動画で紹介し、必要な材料をワンクリックで発注できるECサイト
+- **主な機能**:
+  - レシピ動画の閲覧（YouTube埋め込み対応）
+  - カテゴリ別レシピ検索（パン/洋菓子）
+  - レシピ詳細と必要材料の表示
+  - ショッピングカート機能
+  - 材料の一括カート追加
+  - 注文フォームと注文管理
+
+## アクセスURL
+
+- **開発環境**: https://3000-ize2hdzkhyojqw08la3pk-cc2fbc16.sandbox.novita.ai
+- **API エンドポイント**: 
+  - レシピ一覧: `GET /api/recipes`
+  - レシピ詳細: `GET /api/recipes/:id`
+  - 材料一覧: `GET /api/ingredients`
+  - 注文作成: `POST /api/orders`
+  - 注文一覧: `GET /api/orders`
+
+## データアーキテクチャ
+
+### データモデル
+
+1. **recipes（レシピ）**
+   - レシピの基本情報（タイトル、説明、動画URL、カテゴリ、難易度、調理時間など）
+
+2. **ingredients（材料マスタ）**
+   - 材料の基本情報（名称、単位、単価、在庫数、カテゴリ、仕入先など）
+
+3. **recipe_ingredients（レシピ材料リレーション）**
+   - レシピと材料の関連付け（必要な量と単位）
+
+4. **orders（注文）**
+   - 注文の基本情報（顧客名、メール、電話、合計金額、ステータスなど）
+
+5. **order_items（注文詳細）**
+   - 注文された材料の詳細（数量、単価、小計）
+
+### ストレージサービス
+
+- **Cloudflare D1 Database**: SQLiteベースの分散データベース
+  - ローカル開発: `.wrangler/state/v3/d1/` に自動作成されるSQLite
+  - 本番環境: Cloudflare D1（グローバル分散）
+
+### データフロー
+
+1. ユーザーがレシピを閲覧
+2. 必要な材料をカートに追加
+3. 注文フォームで顧客情報を入力
+4. 注文データをD1データベースに保存
+5. 注文確認通知を表示
+
+## 完成機能
+
+✅ レシピ一覧表示（カテゴリフィルター付き）  
+✅ レシピ詳細表示（動画埋め込み、材料リスト、作り方）  
+✅ 材料のショッピングカート機能  
+✅ カート内容の編集（数量変更・削除）  
+✅ 注文フォーム（顧客情報入力）  
+✅ 注文送信とデータベース保存  
+✅ レスポンシブデザイン（PC/タブレット/スマホ対応）  
+✅ ローカルストレージによるカート永続化  
+
+## 未実装機能
+
+❌ 決済システム連携（Stripe等）  
+❌ 在庫管理システム  
+❌ 管理画面（レシピ・材料・注文の管理）  
+❌ ユーザー認証・会員機能  
+❌ 注文履歴表示  
+❌ メール通知機能  
+❌ 動画アップロード機能（現在はYouTube埋め込みのみ）  
+
+## 推奨される次のステップ
+
+1. **決済システムの統合**
+   - Stripe APIを使用した決済処理の実装
+   - 環境変数でStripe APIキーを管理
+
+2. **管理画面の開発**
+   - レシピのCRUD操作
+   - 材料の在庫管理
+   - 注文ステータス管理
+
+3. **ユーザー認証機能**
+   - 会員登録・ログイン機能
+   - 注文履歴の閲覧
+
+4. **メール通知**
+   - 注文確認メールの自動送信
+   - SendGrid等のメールサービス連携
+
+5. **本番デプロイ**
+   - Cloudflare Pagesへのデプロイ
+   - D1データベースの本番環境作成
+   - カスタムドメインの設定
+
+## 使い方
+
+### ユーザー向け
+
+1. トップページでレシピ一覧を閲覧
+2. カテゴリボタンで「パン」または「洋菓子」に絞り込み
+3. レシピカードをクリックして詳細を表示
+4. 動画を見ながらレシピを確認
+5. 必要な材料を個別または一括でカートに追加
+6. カートボタンから内容を確認・編集
+7. 「注文する」ボタンで注文フォームを開く
+8. 顧客情報を入力して注文を確定
+
+### 開発者向け
+
+#### ローカル開発
+
+```bash
+# プロジェクトディレクトリに移動
+cd /home/user/webapp
+
+# ビルド
+npm run build
+
+# PM2でサービス起動
+pm2 start ecosystem.config.cjs
+
+# ログ確認
+pm2 logs webapp --nostream
+
+# サービス停止
+pm2 delete webapp
 ```
 
-```txt
-npm run deploy
+#### データベース操作
+
+```bash
+# マイグレーション適用
+npm run db:migrate:local
+
+# サンプルデータ投入
+npm run db:seed
+
+# データベースリセット
+npm run db:reset
+
+# SQLクエリ実行
+npx wrangler d1 execute webapp-production --local --command="SELECT * FROM recipes"
 ```
 
-[For generating/synchronizing types based on your Worker configuration run](https://developers.cloudflare.com/workers/wrangler/commands/#types):
+#### ポート管理
 
-```txt
-npm run cf-typegen
+```bash
+# ポート3000をクリーンアップ
+npm run clean-port
 ```
 
-Pass the `CloudflareBindings` as generics when instantiation `Hono`:
+## デプロイ状況
 
-```ts
-// src/index.ts
-const app = new Hono<{ Bindings: CloudflareBindings }>()
-```
+- **プラットフォーム**: Cloudflare Pages（準備済み）
+- **ステータス**: ⏳ ローカル開発環境で動作確認済み（本番デプロイ未実施）
+- **技術スタック**: 
+  - バックエンド: Hono + TypeScript
+  - フロントエンド: Vanilla JavaScript + TailwindCSS
+  - データベース: Cloudflare D1 (SQLite)
+  - ランタイム: Cloudflare Workers
+- **最終更新日**: 2025-11-23
+
+## サンプルデータ
+
+プロジェクトには以下のサンプルデータが含まれています：
+
+- **レシピ**: 4件（基本の食パン、フランスパン、ガトーショコラ、バターケーキ）
+- **材料**: 15種類（強力粉、薄力粉、バター、卵など）
+- **カテゴリ**: パン、洋菓子
+
+## 技術仕様
+
+- **Node.js**: 必須（開発環境）
+- **Wrangler**: Cloudflare CLI ツール
+- **PM2**: プロセスマネージャー（開発用）
+- **ブラウザ対応**: モダンブラウザ（Chrome, Firefox, Safari, Edge）
+
+## ライセンス
+
+このプロジェクトは教育・研究目的で作成されました。
