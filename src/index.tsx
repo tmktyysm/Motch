@@ -83,6 +83,195 @@ app.get('/api/recipes/:id', async (c) => {
   }
 })
 
+// レシピ作成
+app.post('/api/recipes', async (c) => {
+  const { env } = c
+  
+  try {
+    const body = await c.req.json()
+    const { 
+      title, 
+      description, 
+      video_url, 
+      category, 
+      difficulty, 
+      prep_time, 
+      cook_time, 
+      servings, 
+      image_url, 
+      instructions,
+      ingredients 
+    } = body
+    
+    // バリデーション
+    if (!title || !category) {
+      return c.json({ error: 'Title and category are required' }, 400)
+    }
+    
+    if (category !== 'パン' && category !== '洋菓子') {
+      return c.json({ error: 'Category must be "パン" or "洋菓子"' }, 400)
+    }
+    
+    // レシピを作成
+    const result = await env.DB.prepare(`
+      INSERT INTO recipes (
+        title, description, video_url, category, difficulty, 
+        prep_time, cook_time, servings, image_url, instructions
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      title, 
+      description || null, 
+      video_url || null, 
+      category, 
+      difficulty || null, 
+      prep_time || null, 
+      cook_time || null, 
+      servings || null, 
+      image_url || null, 
+      instructions || null
+    ).run()
+    
+    const recipeId = result.meta.last_row_id
+    
+    // 材料を追加
+    if (ingredients && Array.isArray(ingredients) && ingredients.length > 0) {
+      for (const ing of ingredients) {
+        await env.DB.prepare(`
+          INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit)
+          VALUES (?, ?, ?, ?)
+        `).bind(recipeId, ing.ingredient_id, ing.quantity, ing.unit).run()
+      }
+    }
+    
+    return c.json({ 
+      message: 'Recipe created successfully',
+      recipe_id: recipeId
+    }, 201)
+  } catch (error) {
+    console.error(error)
+    return c.json({ error: 'Failed to create recipe' }, 500)
+  }
+})
+
+// レシピ更新
+app.put('/api/recipes/:id', async (c) => {
+  const { env } = c
+  const recipeId = c.req.param('id')
+  
+  try {
+    // レシピが存在するか確認
+    const existingRecipe = await env.DB.prepare(
+      'SELECT * FROM recipes WHERE id = ?'
+    ).bind(recipeId).first()
+    
+    if (!existingRecipe) {
+      return c.json({ error: 'Recipe not found' }, 404)
+    }
+    
+    const body = await c.req.json()
+    const { 
+      title, 
+      description, 
+      video_url, 
+      category, 
+      difficulty, 
+      prep_time, 
+      cook_time, 
+      servings, 
+      image_url, 
+      instructions,
+      ingredients 
+    } = body
+    
+    // バリデーション
+    if (category && category !== 'パン' && category !== '洋菓子') {
+      return c.json({ error: 'Category must be "パン" or "洋菓子"' }, 400)
+    }
+    
+    // レシピを更新
+    await env.DB.prepare(`
+      UPDATE recipes SET
+        title = ?,
+        description = ?,
+        video_url = ?,
+        category = ?,
+        difficulty = ?,
+        prep_time = ?,
+        cook_time = ?,
+        servings = ?,
+        image_url = ?,
+        instructions = ?,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).bind(
+      title || existingRecipe.title,
+      description !== undefined ? description : existingRecipe.description,
+      video_url !== undefined ? video_url : existingRecipe.video_url,
+      category || existingRecipe.category,
+      difficulty !== undefined ? difficulty : existingRecipe.difficulty,
+      prep_time !== undefined ? prep_time : existingRecipe.prep_time,
+      cook_time !== undefined ? cook_time : existingRecipe.cook_time,
+      servings !== undefined ? servings : existingRecipe.servings,
+      image_url !== undefined ? image_url : existingRecipe.image_url,
+      instructions !== undefined ? instructions : existingRecipe.instructions,
+      recipeId
+    ).run()
+    
+    // 材料を更新（既存の材料を削除して再追加）
+    if (ingredients && Array.isArray(ingredients)) {
+      // 既存の材料を削除
+      await env.DB.prepare(
+        'DELETE FROM recipe_ingredients WHERE recipe_id = ?'
+      ).bind(recipeId).run()
+      
+      // 新しい材料を追加
+      for (const ing of ingredients) {
+        await env.DB.prepare(`
+          INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit)
+          VALUES (?, ?, ?, ?)
+        `).bind(recipeId, ing.ingredient_id, ing.quantity, ing.unit).run()
+      }
+    }
+    
+    return c.json({ 
+      message: 'Recipe updated successfully',
+      recipe_id: recipeId
+    })
+  } catch (error) {
+    console.error(error)
+    return c.json({ error: 'Failed to update recipe' }, 500)
+  }
+})
+
+// レシピ削除
+app.delete('/api/recipes/:id', async (c) => {
+  const { env } = c
+  const recipeId = c.req.param('id')
+  
+  try {
+    // レシピが存在するか確認
+    const recipe = await env.DB.prepare(
+      'SELECT * FROM recipes WHERE id = ?'
+    ).bind(recipeId).first()
+    
+    if (!recipe) {
+      return c.json({ error: 'Recipe not found' }, 404)
+    }
+    
+    // レシピを削除（recipe_ingredientsは外部キー制約でカスケード削除される）
+    await env.DB.prepare(
+      'DELETE FROM recipes WHERE id = ?'
+    ).bind(recipeId).run()
+    
+    return c.json({ 
+      message: 'Recipe deleted successfully'
+    })
+  } catch (error) {
+    console.error(error)
+    return c.json({ error: 'Failed to delete recipe' }, 500)
+  }
+})
+
 // =====================================
 // 材料API
 // =====================================
@@ -242,6 +431,222 @@ app.get('/api/orders/:id', async (c) => {
 })
 
 // =====================================
+// 管理画面ページ
+// =====================================
+
+app.get('/admin', (c) => {
+  return c.html(`
+    <!DOCTYPE html>
+    <html lang="ja">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>管理画面 - ナチュラルベーカリー</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+        <link href="/static/style.css" rel="stylesheet">
+    </head>
+    <body>
+        <!-- ヘッダー -->
+        <header class="glass-effect sticky top-0 z-40 border-b border-[#E8DCC4] border-opacity-30">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#D4A574] to-[#B88A5A] flex items-center justify-center shadow-md">
+                            <i class="fas fa-cog text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-2xl font-bold heading-elegant text-gradient">
+                                管理画面
+                            </h1>
+                            <p class="text-xs text-[#8B6F47] font-light">レシピ管理システム</p>
+                        </div>
+                    </div>
+                    <a href="/" class="btn-natural px-5 py-3 rounded-full text-white font-medium" 
+                       style="background: linear-gradient(135deg, #B88A5A, #8B6F47);">
+                        <i class="fas fa-home mr-2"></i>
+                        <span class="hidden sm:inline">トップページへ</span>
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- メインコンテンツ -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- タブナビゲーション -->
+            <div class="mb-8">
+                <div class="flex gap-3 border-b border-[#E8DCC4]">
+                    <button class="tab-btn px-6 py-3 font-semibold text-[#B88A5A] border-b-2 border-[#B88A5A]" data-tab="recipes">
+                        <i class="fas fa-book mr-2"></i>レシピ管理
+                    </button>
+                    <button class="tab-btn px-6 py-3 font-semibold text-[#8B6F47] hover:text-[#B88A5A]" data-tab="create">
+                        <i class="fas fa-plus mr-2"></i>新規作成
+                    </button>
+                </div>
+            </div>
+
+            <!-- レシピ一覧タブ -->
+            <div id="recipes-tab" class="tab-content">
+                <div class="section-natural mb-6">
+                    <h2 class="text-xl font-bold heading-elegant text-[#4A4A48] mb-4">
+                        <i class="fas fa-list mr-2"></i>レシピ一覧
+                    </h2>
+                    <div id="adminRecipeList" class="space-y-3">
+                        <!-- レシピリストが動的に追加されます -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 新規作成タブ -->
+            <div id="create-tab" class="tab-content hidden">
+                <div class="section-natural">
+                    <h2 class="text-xl font-bold heading-elegant text-[#4A4A48] mb-6">
+                        <i class="fas fa-plus-circle mr-2"></i>新しいレシピを作成
+                    </h2>
+                    <form id="recipeForm">
+                        <input type="hidden" id="recipeId" value="">
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- 基本情報 -->
+                            <div class="space-y-4">
+                                <h3 class="font-semibold text-[#4A4A48] text-lg mb-3">基本情報</h3>
+                                
+                                <div>
+                                    <label class="block text-sm font-semibold text-[#4A4A48] mb-2">
+                                        レシピ名 <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="text" id="title" required class="input-natural w-full" placeholder="例：基本の食パン">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-semibold text-[#4A4A48] mb-2">
+                                        カテゴリ <span class="text-red-500">*</span>
+                                    </label>
+                                    <select id="category" required class="input-natural w-full">
+                                        <option value="">選択してください</option>
+                                        <option value="パン">パン</option>
+                                        <option value="洋菓子">洋菓子</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-semibold text-[#4A4A48] mb-2">
+                                        難易度
+                                    </label>
+                                    <select id="difficulty" class="input-natural w-full">
+                                        <option value="">選択してください</option>
+                                        <option value="初級">初級</option>
+                                        <option value="中級">中級</option>
+                                        <option value="上級">上級</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="grid grid-cols-3 gap-3">
+                                    <div>
+                                        <label class="block text-sm font-semibold text-[#4A4A48] mb-2">
+                                            準備時間（分）
+                                        </label>
+                                        <input type="number" id="prep_time" class="input-natural w-full" placeholder="20">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold text-[#4A4A48] mb-2">
+                                            調理時間（分）
+                                        </label>
+                                        <input type="number" id="cook_time" class="input-natural w-full" placeholder="180">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold text-[#4A4A48] mb-2">
+                                            人数
+                                        </label>
+                                        <input type="number" id="servings" class="input-natural w-full" placeholder="8">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- メディア情報 -->
+                            <div class="space-y-4">
+                                <h3 class="font-semibold text-[#4A4A48] text-lg mb-3">メディア情報</h3>
+                                
+                                <div>
+                                    <label class="block text-sm font-semibold text-[#4A4A48] mb-2">
+                                        動画URL（YouTube埋め込みURL）
+                                    </label>
+                                    <input type="url" id="video_url" class="input-natural w-full" 
+                                           placeholder="https://www.youtube.com/embed/...">
+                                    <p class="text-xs text-[#8B6F47] mt-1">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        YouTube動画の埋め込みURLを入力してください
+                                    </p>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-semibold text-[#4A4A48] mb-2">
+                                        画像URL
+                                    </label>
+                                    <input type="url" id="image_url" class="input-natural w-full" 
+                                           placeholder="https://example.com/image.jpg">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 説明 -->
+                        <div class="mt-6">
+                            <label class="block text-sm font-semibold text-[#4A4A48] mb-2">
+                                説明
+                            </label>
+                            <textarea id="description" rows="3" class="input-natural w-full resize-none" 
+                                      placeholder="レシピの簡単な説明を入力してください"></textarea>
+                        </div>
+                        
+                        <!-- 作り方 -->
+                        <div class="mt-6">
+                            <label class="block text-sm font-semibold text-[#4A4A48] mb-2">
+                                作り方
+                            </label>
+                            <textarea id="instructions" rows="8" class="input-natural w-full resize-none" 
+                                      placeholder="1. ボウルに強力粉、砂糖、塩を入れる&#10;2. 水を加えてこねる&#10;3. ..."></textarea>
+                        </div>
+                        
+                        <!-- 材料選択 -->
+                        <div class="mt-6">
+                            <label class="block text-sm font-semibold text-[#4A4A48] mb-2">
+                                材料
+                            </label>
+                            <div id="ingredientsList" class="space-y-2 mb-3">
+                                <!-- 材料リストが動的に追加されます -->
+                            </div>
+                            <button type="button" id="addIngredientBtn" 
+                                    class="btn-natural px-4 py-2 rounded-lg text-[#8B6F47] bg-[#F5F3EE] hover:bg-[#E8DCC4]">
+                                <i class="fas fa-plus mr-2"></i>材料を追加
+                            </button>
+                        </div>
+                        
+                        <!-- 送信ボタン -->
+                        <div class="flex gap-3 mt-8">
+                            <button type="button" id="cancelBtn" 
+                                    class="btn-natural flex-1 py-3 rounded-full bg-white border-2 border-[#E8DCC4] text-[#8B6F47] font-semibold hover:bg-[#F5F3EE]">
+                                キャンセル
+                            </button>
+                            <button type="submit" 
+                                    class="btn-natural flex-1 py-3 rounded-full text-white font-bold" 
+                                    style="background: linear-gradient(135deg, #9CAF88, #6B7F5C);">
+                                <i class="fas fa-save mr-2"></i>
+                                <span id="submitBtnText">レシピを保存</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+
+        <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+        <script src="/static/admin.js"></script>
+    </body>
+    </html>
+  `)
+})
+
+// =====================================
 // フロントエンドページ
 // =====================================
 
@@ -273,12 +678,18 @@ app.get('/', (c) => {
                             <p class="text-xs text-[#8B6F47] font-light">自然の恵みから生まれるレシピ</p>
                         </div>
                     </div>
-                    <button id="cartBtn" class="btn-natural relative px-5 py-3 rounded-full text-white font-medium" 
-                            style="background: linear-gradient(135deg, #B88A5A, #8B6F47);">
-                        <i class="fas fa-shopping-basket mr-2"></i>
-                        <span class="hidden sm:inline">カート</span>
-                        <span id="cartCount" class="cart-badge absolute -top-2 -right-2 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">0</span>
-                    </button>
+                    <div class="flex items-center gap-3">
+                        <a href="/admin" class="btn-natural px-4 py-2 rounded-full text-[#8B6F47] bg-white border-2 border-[#E8DCC4] hover:bg-[#F5F3EE] font-medium hidden sm:flex items-center">
+                            <i class="fas fa-cog mr-2"></i>
+                            管理
+                        </a>
+                        <button id="cartBtn" class="btn-natural relative px-5 py-3 rounded-full text-white font-medium" 
+                                style="background: linear-gradient(135deg, #B88A5A, #8B6F47);">
+                            <i class="fas fa-shopping-basket mr-2"></i>
+                            <span class="hidden sm:inline">カート</span>
+                            <span id="cartCount" class="cart-badge absolute -top-2 -right-2 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">0</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </header>
