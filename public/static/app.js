@@ -289,14 +289,113 @@ async function showRecipeDetail(recipeId) {
               </div>
             </div>
           ` : ''}
+          
+          <!-- トレンド情報 -->
+          <div class="section-natural mt-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-xl font-bold heading-elegant text-[#4A4A48] flex items-center gap-2">
+                <i class="fas fa-fire text-[#B88A5A]"></i>
+                トレンド情報
+              </h3>
+              <button onclick="loadTrends(${recipeId})" 
+                      class="btn-natural px-4 py-2 rounded-lg text-[#8B6F47] bg-[#F5F3EE] hover:bg-[#E8DCC4] text-sm">
+                <i class="fas fa-sync-alt mr-1"></i>更新
+              </button>
+            </div>
+            <div id="trendsContainer-${recipeId}" class="space-y-3">
+              <div class="text-center py-8 text-[#8B6F47]">
+                <i class="fas fa-spinner fa-spin text-3xl mb-2"></i>
+                <p>トレンド情報を読み込み中...</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     `;
     
     document.body.appendChild(modal);
+    
+    // トレンド情報を自動的に読み込む
+    loadTrends(recipeId);
   } catch (error) {
     console.error('Failed to load recipe details:', error);
     alert('レシピの詳細を読み込めませんでした');
+  }
+}
+
+// トレンド情報を読み込む
+async function loadTrends(recipeId) {
+  const container = document.getElementById(`trendsContainer-${recipeId}`);
+  
+  if (!container) return;
+  
+  try {
+    // ローディング表示
+    container.innerHTML = `
+      <div class="text-center py-8 text-[#8B6F47]">
+        <i class="fas fa-spinner fa-spin text-3xl mb-2"></i>
+        <p>トレンド情報を読み込み中...</p>
+      </div>
+    `;
+    
+    const response = await axios.get(`/api/recipes/${recipeId}/trends`);
+    const data = response.data;
+    
+    // トレンド情報を表示
+    container.innerHTML = `
+      <!-- トレンド記事 -->
+      <div class="space-y-3">
+        ${data.trends.map(trend => `
+          <div class="card-natural p-4 hover-grow">
+            <div class="flex items-start gap-3">
+              <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#D4A574] to-[#B88A5A] flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-fire text-white"></i>
+              </div>
+              <div class="flex-1">
+                <h4 class="font-bold text-[#4A4A48] mb-1">${trend.title}</h4>
+                <p class="text-sm text-[#8B6F47] mb-2">${trend.description}</p>
+                <div class="flex items-center gap-3 text-xs text-[#B88A5A]">
+                  <span><i class="fas fa-tag mr-1"></i>${trend.source}</span>
+                  <span><i class="fas fa-calendar mr-1"></i>${trend.date}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      
+      <!-- 関連キーワード -->
+      <div class="mt-4 p-4 bg-[#F5F3EE] rounded-lg">
+        <h4 class="text-sm font-semibold text-[#4A4A48] mb-2">
+          <i class="fas fa-search mr-1"></i>関連キーワード
+        </h4>
+        <div class="flex flex-wrap gap-2">
+          ${data.related_keywords.map(keyword => `
+            <span class="px-3 py-1 text-xs rounded-full bg-white text-[#8B6F47] border border-[#E8DCC4]">
+              ${keyword}
+            </span>
+          `).join('')}
+        </div>
+      </div>
+      
+      <div class="text-xs text-[#B88A5A] text-center mt-3">
+        <i class="fas fa-clock mr-1"></i>
+        最終更新: ${new Date(data.timestamp).toLocaleString('ja-JP')}
+      </div>
+    `;
+  } catch (error) {
+    console.error('Failed to load trends:', error);
+    container.innerHTML = `
+      <div class="text-center py-8">
+        <i class="fas fa-exclamation-circle text-3xl text-red-400 mb-2"></i>
+        <p class="text-red-500">トレンド情報の読み込みに失敗しました</p>
+        <button onclick="loadTrends(${recipeId})" 
+                class="btn-natural mt-3 px-4 py-2 rounded-lg text-white"
+                style="background: linear-gradient(135deg, #B88A5A, #8B6F47);">
+          <i class="fas fa-redo mr-1"></i>再試行
+        </button>
+      </div>
+    `;
   }
 }
 

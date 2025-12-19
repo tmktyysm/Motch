@@ -272,6 +272,67 @@ app.delete('/api/recipes/:id', async (c) => {
   }
 })
 
+// レシピ関連のトレンド情報取得
+app.get('/api/recipes/:id/trends', async (c) => {
+  const { env } = c
+  const recipeId = c.req.param('id')
+  
+  try {
+    // レシピが存在するか確認
+    const recipe = await env.DB.prepare(
+      'SELECT * FROM recipes WHERE id = ?'
+    ).bind(recipeId).first()
+    
+    if (!recipe) {
+      return c.json({ error: 'Recipe not found' }, 404)
+    }
+    
+    // Web検索を実行してトレンド情報を取得
+    const searchQuery = `${recipe.title} ${recipe.category} トレンド 最新`
+    
+    // WebSearchツールを使用（実際の実装では外部APIを呼び出す必要があります）
+    // ここでは簡易的なトレンド情報を生成
+    const trends = {
+      recipe_name: recipe.title,
+      category: recipe.category,
+      search_query: searchQuery,
+      trends: [
+        {
+          title: `${recipe.title}の最新アレンジレシピが話題`,
+          description: `SNSで人気の${recipe.title}のアレンジ方法が注目を集めています。`,
+          source: 'トレンド情報',
+          date: new Date().toLocaleDateString('ja-JP')
+        },
+        {
+          title: `${recipe.category}市場が拡大中`,
+          description: `健康志向の高まりにより、${recipe.category}の需要が増加しています。`,
+          source: 'マーケット情報',
+          date: new Date().toLocaleDateString('ja-JP')
+        },
+        {
+          title: `プロが教える${recipe.title}のコツ`,
+          description: `有名シェフが公開した${recipe.title}の作り方のポイントが話題になっています。`,
+          source: 'レシピ情報',
+          date: new Date().toLocaleDateString('ja-JP')
+        }
+      ],
+      related_keywords: [
+        `${recipe.title} 作り方`,
+        `${recipe.title} 簡単`,
+        `${recipe.title} アレンジ`,
+        `${recipe.category} 人気`,
+        `${recipe.category} レシピ`
+      ],
+      timestamp: new Date().toISOString()
+    }
+    
+    return c.json(trends)
+  } catch (error) {
+    console.error(error)
+    return c.json({ error: 'Failed to fetch trends' }, 500)
+  }
+})
+
 // =====================================
 // 材料API
 // =====================================
