@@ -1,1 +1,283 @@
-h1 { font-family: Arial, Helvetica, sans-serif; }
+/* ナチュラル&洗練されたUIのカスタムスタイル */
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap');
+
+:root {
+  /* ナチュラルカラーパレット */
+  --color-cream: #FAF8F3;
+  --color-warm-white: #FFFEF9;
+  --color-sand: #E8DCC4;
+  --color-terracotta: #D4A574;
+  --color-clay: #B88A5A;
+  --color-earth: #8B6F47;
+  --color-sage: #9CAF88;
+  --color-forest: #6B7F5C;
+  --color-charcoal: #4A4A48;
+  --color-soft-gray: #F5F3EE;
+  
+  /* シャドウ */
+  --shadow-soft: 0 2px 12px rgba(139, 111, 71, 0.08);
+  --shadow-medium: 0 4px 20px rgba(139, 111, 71, 0.12);
+  --shadow-strong: 0 8px 32px rgba(139, 111, 71, 0.16);
+}
+
+* {
+  font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
+  background: linear-gradient(to bottom, var(--color-cream), var(--color-warm-white));
+  min-height: 100vh;
+  color: var(--color-charcoal);
+}
+
+/* エレガントな見出し */
+.heading-elegant {
+  font-family: 'Playfair Display', serif;
+  letter-spacing: 0.02em;
+}
+
+/* カスタムスクロールバー */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-soft-gray);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-clay);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-earth);
+}
+
+/* ボタンのホバーエフェクト */
+.btn-natural {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-soft);
+}
+
+.btn-natural:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-medium);
+}
+
+.btn-natural:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-soft);
+}
+
+/* カードエフェクト */
+.card-natural {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-soft);
+  border: 1px solid rgba(232, 220, 196, 0.3);
+}
+
+.card-natural:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-strong);
+  border-color: rgba(212, 165, 116, 0.4);
+}
+
+/* グラスモーフィズム効果 */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* アニメーション */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.5s ease-out;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.4s ease-out;
+}
+
+/* バッジスタイル */
+.badge-natural {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  box-shadow: var(--shadow-soft);
+}
+
+.badge-bread {
+  background: linear-gradient(135deg, #FFF4E0, #FFE8C0);
+  color: #B8860B;
+}
+
+.badge-pastry {
+  background: linear-gradient(135deg, #FFE4E9, #FFD4DC);
+  color: #C75B7A;
+}
+
+.badge-difficulty {
+  background: linear-gradient(135deg, var(--color-soft-gray), var(--color-sand));
+  color: var(--color-earth);
+}
+
+/* インプットスタイル */
+.input-natural {
+  border: 2px solid var(--color-sand);
+  border-radius: 12px;
+  padding: 12px 16px;
+  transition: all 0.3s ease;
+  background: white;
+  font-size: 0.95rem;
+}
+
+.input-natural:focus {
+  outline: none;
+  border-color: var(--color-clay);
+  box-shadow: 0 0 0 4px rgba(212, 165, 116, 0.1);
+}
+
+/* モーダルオーバーレイ */
+.modal-overlay {
+  background: rgba(74, 74, 72, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* トースト通知 */
+.toast-natural {
+  background: linear-gradient(135deg, var(--color-sage), var(--color-forest));
+  color: white;
+  padding: 14px 24px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-strong);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 500;
+}
+
+/* カート数バッジ */
+.cart-badge {
+  background: linear-gradient(135deg, #E57373, #D32F2F);
+  box-shadow: 0 2px 8px rgba(211, 47, 47, 0.3);
+}
+
+/* ローディングスピナー */
+.spinner {
+  border: 3px solid var(--color-sand);
+  border-top: 3px solid var(--color-clay);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* スムーズなトランジション */
+.transition-smooth {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ホバーで拡大 */
+.hover-grow {
+  transition: transform 0.3s ease;
+}
+
+.hover-grow:hover {
+  transform: scale(1.02);
+}
+
+/* テキストグラデーション */
+.text-gradient {
+  background: linear-gradient(135deg, var(--color-clay), var(--color-earth));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ディバイダー */
+.divider-natural {
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--color-sand), transparent);
+  margin: 2rem 0;
+}
+
+/* イメージオーバーレイ */
+.image-overlay {
+  position: relative;
+}
+
+.image-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.3));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.image-overlay:hover::after {
+  opacity: 1;
+}
+
+/* セクション */
+.section-natural {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: var(--shadow-soft);
+  border: 1px solid rgba(232, 220, 196, 0.3);
+}

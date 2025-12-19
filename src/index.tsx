@@ -252,102 +252,158 @@ app.get('/', (c) => {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>レシピ動画 & 材料発注サイト</title>
+        <title>ナチュラルベーカリー - レシピと材料</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+        <link href="/static/style.css" rel="stylesheet">
     </head>
-    <body class="bg-gray-50">
+    <body>
         <!-- ヘッダー -->
-        <header class="bg-white shadow-sm">
-            <div class="max-w-7xl mx-auto px-4 py-4">
+        <header class="glass-effect sticky top-0 z-40 border-b border-[#E8DCC4] border-opacity-30">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
                 <div class="flex items-center justify-between">
-                    <h1 class="text-2xl font-bold text-gray-800">
-                        <i class="fas fa-cookie-bite text-orange-500 mr-2"></i>
-                        パン・洋菓子レシピ
-                    </h1>
-                    <button id="cartBtn" class="relative bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition">
-                        <i class="fas fa-shopping-cart mr-2"></i>
-                        カート
-                        <span id="cartCount" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center">0</span>
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#D4A574] to-[#B88A5A] flex items-center justify-center shadow-md">
+                            <i class="fas fa-wheat-awn text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-2xl font-bold heading-elegant text-gradient">
+                                ナチュラルベーカリー
+                            </h1>
+                            <p class="text-xs text-[#8B6F47] font-light">自然の恵みから生まれるレシピ</p>
+                        </div>
+                    </div>
+                    <button id="cartBtn" class="btn-natural relative px-5 py-3 rounded-full text-white font-medium" 
+                            style="background: linear-gradient(135deg, #B88A5A, #8B6F47);">
+                        <i class="fas fa-shopping-basket mr-2"></i>
+                        <span class="hidden sm:inline">カート</span>
+                        <span id="cartCount" class="cart-badge absolute -top-2 -right-2 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">0</span>
                     </button>
                 </div>
             </div>
         </header>
 
+        <!-- ヒーローセクション -->
+        <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="section-natural text-center py-12 animate-fade-in-up">
+                <h2 class="text-3xl md:text-4xl font-bold heading-elegant text-[#4A4A48] mb-4">
+                    手作りの喜びを、あなたのキッチンに
+                </h2>
+                <p class="text-[#8B6F47] text-lg max-w-2xl mx-auto">
+                    プロのレシピと厳選された材料で、誰でも簡単に本格的なパン・洋菓子作りが楽しめます
+                </p>
+            </div>
+        </section>
+
         <!-- メインコンテンツ -->
-        <main class="max-w-7xl mx-auto px-4 py-8">
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
             <!-- カテゴリフィルター -->
-            <div class="mb-6">
-                <div class="flex gap-4">
-                    <button class="category-btn px-6 py-2 rounded-lg bg-orange-500 text-white font-medium" data-category="">
-                        すべて
+            <div class="mb-10 animate-fade-in-up" style="animation-delay: 0.1s;">
+                <div class="flex flex-wrap gap-3 justify-center">
+                    <button class="category-btn btn-natural px-8 py-3 rounded-full font-medium transition-smooth text-white shadow-md" 
+                            style="background: linear-gradient(135deg, #B88A5A, #8B6F47);" 
+                            data-category="">
+                        <i class="fas fa-th mr-2"></i>すべて
                     </button>
-                    <button class="category-btn px-6 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium" data-category="パン">
-                        パン
+                    <button class="category-btn btn-natural px-8 py-3 rounded-full font-medium transition-smooth bg-white text-[#8B6F47] border-2 border-[#E8DCC4]" 
+                            data-category="パン">
+                        <i class="fas fa-bread-slice mr-2"></i>パン
                     </button>
-                    <button class="category-btn px-6 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium" data-category="洋菓子">
-                        洋菓子
+                    <button class="category-btn btn-natural px-8 py-3 rounded-full font-medium transition-smooth bg-white text-[#8B6F47] border-2 border-[#E8DCC4]" 
+                            data-category="洋菓子">
+                        <i class="fas fa-cake-candles mr-2"></i>洋菓子
                     </button>
                 </div>
             </div>
 
             <!-- レシピ一覧 -->
-            <div id="recipeList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div id="recipeList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 <!-- ここにレシピカードが動的に追加されます -->
             </div>
         </main>
 
         <!-- カートモーダル -->
-        <div id="cartModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-2xl font-bold">カート</h2>
-                    <button id="closeCartBtn" class="text-gray-500 hover:text-gray-700">
-                        <i class="fas fa-times text-2xl"></i>
-                    </button>
+        <div id="cartModal" class="hidden fixed inset-0 modal-overlay flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full mx-4 max-h-[90vh] overflow-hidden animate-scale-in">
+                <div class="sticky top-0 bg-gradient-to-r from-[#FAF8F3] to-[#FFFEF9] px-6 py-5 border-b border-[#E8DCC4]">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold heading-elegant text-[#4A4A48]">ショッピングカート</h2>
+                            <p class="text-sm text-[#8B6F47] mt-1">選んだ材料を確認しましょう</p>
+                        </div>
+                        <button id="closeCartBtn" class="w-10 h-10 rounded-full bg-white hover:bg-[#F5F3EE] transition-smooth flex items-center justify-center text-[#8B6F47]">
+                            <i class="fas fa-times text-lg"></i>
+                        </button>
+                    </div>
                 </div>
-                <div id="cartItems" class="mb-6">
+                <div id="cartItems" class="p-6 overflow-y-auto" style="max-height: calc(90vh - 220px);">
                     <!-- カートアイテムが表示されます -->
                 </div>
-                <div class="border-t pt-4">
+                <div class="sticky bottom-0 bg-gradient-to-r from-[#FAF8F3] to-[#FFFEF9] px-6 py-5 border-t border-[#E8DCC4]">
                     <div class="flex justify-between items-center mb-4">
-                        <span class="text-xl font-bold">合計金額:</span>
-                        <span id="totalAmount" class="text-2xl font-bold text-orange-500">¥0</span>
+                        <span class="text-lg font-semibold text-[#4A4A48]">合計金額</span>
+                        <span id="totalAmount" class="text-3xl font-bold heading-elegant text-[#B88A5A]">¥0</span>
                     </div>
-                    <button id="checkoutBtn" class="w-full bg-orange-500 text-white py-3 rounded-lg font-bold hover:bg-orange-600 transition">
-                        注文する
+                    <button id="checkoutBtn" class="btn-natural w-full py-4 rounded-full text-white font-bold text-lg" 
+                            style="background: linear-gradient(135deg, #9CAF88, #6B7F5C);">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        注文に進む
                     </button>
                 </div>
             </div>
         </div>
 
         <!-- 注文フォームモーダル -->
-        <div id="orderModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-                <h2 class="text-2xl font-bold mb-4">注文情報入力</h2>
-                <form id="orderForm">
-                    <div class="mb-4">
-                        <label class="block text-gray-700 mb-2">お名前 *</label>
-                        <input type="text" id="customerName" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+        <div id="orderModal" class="hidden fixed inset-0 modal-overlay flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 animate-scale-in">
+                <div class="bg-gradient-to-r from-[#FAF8F3] to-[#FFFEF9] px-6 py-5 border-b border-[#E8DCC4] rounded-t-2xl">
+                    <h2 class="text-2xl font-bold heading-elegant text-[#4A4A48]">お客様情報</h2>
+                    <p class="text-sm text-[#8B6F47] mt-1">配送に必要な情報をご入力ください</p>
+                </div>
+                <form id="orderForm" class="p-6">
+                    <div class="space-y-5">
+                        <div>
+                            <label class="block text-sm font-semibold text-[#4A4A48] mb-2">
+                                <i class="fas fa-user mr-2 text-[#B88A5A]"></i>お名前 <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="customerName" required 
+                                   class="input-natural w-full" 
+                                   placeholder="山田 太郎">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-[#4A4A48] mb-2">
+                                <i class="fas fa-envelope mr-2 text-[#B88A5A]"></i>メールアドレス <span class="text-red-500">*</span>
+                            </label>
+                            <input type="email" id="customerEmail" required 
+                                   class="input-natural w-full" 
+                                   placeholder="example@email.com">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-[#4A4A48] mb-2">
+                                <i class="fas fa-phone mr-2 text-[#B88A5A]"></i>電話番号
+                            </label>
+                            <input type="tel" id="customerPhone" 
+                                   class="input-natural w-full" 
+                                   placeholder="090-1234-5678">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-[#4A4A48] mb-2">
+                                <i class="fas fa-comment mr-2 text-[#B88A5A]"></i>備考・特記事項
+                            </label>
+                            <textarea id="orderNotes" rows="3" 
+                                      class="input-natural w-full resize-none" 
+                                      placeholder="配送時の注意事項などをご記入ください"></textarea>
+                        </div>
                     </div>
-                    <div class="mb-4">
-                        <label class="block text-gray-700 mb-2">メールアドレス *</label>
-                        <input type="email" id="customerEmail" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
-                    </div>
-                    <div class="mb-4">
-                        <label class="block text-gray-700 mb-2">電話番号</label>
-                        <input type="tel" id="customerPhone" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
-                    </div>
-                    <div class="mb-6">
-                        <label class="block text-gray-700 mb-2">備考</label>
-                        <textarea id="orderNotes" rows="3" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"></textarea>
-                    </div>
-                    <div class="flex gap-4">
-                        <button type="button" id="cancelOrderBtn" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg font-bold hover:bg-gray-400 transition">
+                    <div class="flex gap-3 mt-8">
+                        <button type="button" id="cancelOrderBtn" 
+                                class="btn-natural flex-1 py-3 rounded-full bg-white border-2 border-[#E8DCC4] text-[#8B6F47] font-semibold hover:bg-[#F5F3EE]">
                             キャンセル
                         </button>
-                        <button type="submit" class="flex-1 bg-orange-500 text-white py-2 rounded-lg font-bold hover:bg-orange-600 transition">
-                            確定
+                        <button type="submit" 
+                                class="btn-natural flex-1 py-3 rounded-full text-white font-bold" 
+                                style="background: linear-gradient(135deg, #9CAF88, #6B7F5C);">
+                            <i class="fas fa-paper-plane mr-2"></i>注文確定
                         </button>
                     </div>
                 </form>
