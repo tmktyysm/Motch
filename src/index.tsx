@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { serveStatic } from 'hono/cloudflare-workers'
+import { setCookie, getCookie, deleteCookie } from 'hono/cookie'
 
 type Bindings = {
   DB: D1Database;
@@ -13,6 +14,169 @@ app.use('/api/*', cors())
 
 // 静的ファイル配信
 app.use('/static/*', serveStatic({ root: './public' }))
+
+// =====================================
+// 認証API（シンプル版）
+// =====================================
+
+// データベース初期化（開発用）
+app.get('/api/init-db', async (c) => {
+  const { env } = c
+  try {
+    await env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        business_name TEXT NOT NULL,
+        business_type TEXT NOT NULL,
+        owner_name TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        phone TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `).run()
+    return c.json({ message: 'Database initialized' })
+  } catch (error) {
+    return c.json({ error: String(error) }, 500)
+  }
+})
+
+// ユーザー登録
+app.post('/api/auth/register', async (c) => {
+  const { env } = c
+  try {
+    const { username, password, business_name, business_type, owner_name, email, phone } = await c.req.json()
+    
+    if (!username || !password || !business_name || !business_type || !owner_name || !email) {
+      return c.json({ error: '必須項目を入力してください' }, 400)
+    }
+    
+    // 既存ユーザーチェック
+    const existing = await env.DB.prepare('SELECT id FROM users WHERE username = ?').bind(username).first()
+    if (existing) {
+      return c.json({ error: 'このユーザー名は既に使用されています' }, 409)
+    }
+    
+    // ユーザー作成
+    const result = await env.DB.prepare(
+      'INSERT INTO users (username, password, business_name, business_type, owner_name, email, phone) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    ).bind(username, password, business_name, business_type, owner_name, email, phone || null).run()
+    
+    return c.json({ message: '登録完了', user_id: result.meta.last_row_id }, 201)
+  } catch (error) {
+    return c.json({ error: String(error) }, 500)
+  }
+})
+
+// ログイン
+app.post('/api/auth/login', async (c) => {
+  const { env } = c
+  try {
+    const { username, password } = await c.req.json()
+    
+    if (!username || !password) {
+      return c.json({ error: 'ユーザー名とパスワードを入力してください' }, 400)
+    }
+    
+    const user = await env.DB.prepare(
+      'SELECT * FROM users WHERE username = ? AND password = ?'
+    ).bind(username, password).first()
+    
+    if (!user) {
+      return c.json({ error: 'ユーザー名またはパスワードが正しくありません' }, 401)
+    }
+    
+    // セッショントークン生成
+    const token = crypto.randomUUID()
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7日後
+    
+    // セッション保存
+    await env.DB.prepare(
+      'INSERT INTO sessions (user_id, token, expires_at) VALUES (?, ?, ?)'
+    ).bind(user.id, token, expiresAt.toISOString()).run()
+    
+    // クッキーにトークンを設定
+    setCookie(c, 'session_token', token, {
+      httpOnly: true,
+      secure: true,
+      maxAge: 7 * 24 * 60 * 60,
+      sameSite: 'Lax',
+      path: '/'
+    })
+    
+    return c.json({
+      message: 'ログイン成功',
+      user: {
+        id: user.id,
+        username: user.username,
+        business_name: user.business_name,
+        business_type: user.business_type,
+        owner_name: user.owner_name,
+        email: user.email
+      }
+    })
+  } catch (error) {
+    return c.json({ error: String(error) }, 500)
+  }
+})
+
+// ログアウト
+app.post('/api/auth/logout', async (c) => {
+  const { env } = c
+  try {
+    const token = getCookie(c, 'session_token')
+    
+    if (token) {
+      // セッション削除
+      await env.DB.prepare('DELETE FROM sessions WHERE token = ?').bind(token).run()
+    }
+    
+    // クッキー削除
+    deleteCookie(c, 'session_token', { path: '/' })
+    
+    return c.json({ message: 'ログアウト成功' })
+  } catch (error) {
+    return c.json({ error: String(error) }, 500)
+  }
+})
+
+// 現在のユーザー情報取得
+app.get('/api/auth/me', async (c) => {
+  const { env } = c
+  try {
+    const token = getCookie(c, 'session_token')
+    
+    if (!token) {
+      return c.json({ error: '認証されていません' }, 401)
+    }
+    
+    // セッション検証
+    const session = await env.DB.prepare(`
+      SELECT s.*, u.* 
+      FROM sessions s
+      JOIN users u ON s.user_id = u.id
+      WHERE s.token = ? AND s.expires_at > datetime('now')
+    `).bind(token).first()
+    
+    if (!session) {
+      return c.json({ error: 'セッションが無効です' }, 401)
+    }
+    
+    return c.json({
+      user: {
+        id: session.user_id,
+        username: session.username,
+        business_name: session.business_name,
+        business_type: session.business_type,
+        owner_name: session.owner_name,
+        email: session.email
+      }
+    })
+  } catch (error) {
+    return c.json({ error: String(error) }, 500)
+  }
+})
 
 // =====================================
 // レシピAPI
@@ -711,7 +875,220 @@ app.get('/admin', (c) => {
 // フロントエンドページ
 // =====================================
 
+// =====================================
+// フロントエンドページ
+// =====================================
+
+// ランディングページ（ログイン・登録）
 app.get('/', (c) => {
+  return c.html(`
+    <!DOCTYPE html>
+    <html lang="ja">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>ナチュラルベーカリー - ログイン</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+        <link href="/static/style.css" rel="stylesheet">
+    </head>
+    <body class="bg-gradient-to-br from-[#FAF8F3] to-[#FFFEF9] min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-md">
+            <!-- ロゴセクション -->
+            <div class="text-center mb-8 animate-fade-in-up">
+                <div class="inline-block w-20 h-20 rounded-full bg-gradient-to-br from-[#D4A574] to-[#B88A5A] flex items-center justify-center shadow-lg mb-4">
+                    <i class="fas fa-wheat-awn text-white text-3xl"></i>
+                </div>
+                <h1 class="text-3xl font-bold heading-elegant text-gradient mb-2">
+                    ナチュラルベーカリー
+                </h1>
+                <p class="text-[#8B6F47]">プロのレシピと厳選された材料をお届け</p>
+            </div>
+
+            <!-- タブボタン -->
+            <div class="flex gap-2 mb-6">
+                <button id="loginTab" class="flex-1 py-3 rounded-full font-bold text-white" style="background: linear-gradient(135deg, #B88A5A, #8B6F47);">
+                    <i class="fas fa-sign-in-alt mr-2"></i>ログイン
+                </button>
+                <button id="registerTab" class="flex-1 py-3 rounded-full font-bold text-[#8B6F47] bg-white border-2 border-[#E8DCC4]">
+                    <i class="fas fa-user-plus mr-2"></i>新規登録
+                </button>
+            </div>
+
+            <!-- ログインフォーム -->
+            <div id="loginForm" class="section-natural rounded-2xl shadow-2xl p-8 animate-scale-in">
+                <form id="loginFormElement">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-[#4A4A48] mb-2">
+                                <i class="fas fa-user mr-2 text-[#B88A5A]"></i>ユーザー名
+                            </label>
+                            <input type="text" id="loginUsername" required 
+                                   class="input-natural w-full" 
+                                   placeholder="ユーザー名を入力">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-[#4A4A48] mb-2">
+                                <i class="fas fa-lock mr-2 text-[#B88A5A]"></i>パスワード
+                            </label>
+                            <input type="password" id="loginPassword" required 
+                                   class="input-natural w-full" 
+                                   placeholder="パスワードを入力">
+                        </div>
+                    </div>
+                    <button type="submit" 
+                            class="btn-natural w-full py-3 rounded-full text-white font-bold mt-6" 
+                            style="background: linear-gradient(135deg, #9CAF88, #6B7F5C);">
+                        <i class="fas fa-sign-in-alt mr-2"></i>ログイン
+                    </button>
+                </form>
+            </div>
+
+            <!-- 登録フォーム -->
+            <div id="registerForm" class="hidden section-natural rounded-2xl shadow-2xl p-8 animate-scale-in">
+                <form id="registerFormElement">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-[#4A4A48] mb-2">
+                                <i class="fas fa-user mr-2 text-[#B88A5A]"></i>ユーザー名 <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="regUsername" required 
+                                   class="input-natural w-full" 
+                                   placeholder="ユーザー名">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-[#4A4A48] mb-2">
+                                <i class="fas fa-lock mr-2 text-[#B88A5A]"></i>パスワード <span class="text-red-500">*</span>
+                            </label>
+                            <input type="password" id="regPassword" required 
+                                   class="input-natural w-full" 
+                                   placeholder="パスワード">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-[#4A4A48] mb-2">
+                                <i class="fas fa-store mr-2 text-[#B88A5A]"></i>店舗名 <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="regBusinessName" required 
+                                   class="input-natural w-full" 
+                                   placeholder="例: ベーカリー山田">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-[#4A4A48] mb-2">
+                                <i class="fas fa-bread-slice mr-2 text-[#B88A5A]"></i>業態 <span class="text-red-500">*</span>
+                            </label>
+                            <select id="regBusinessType" required class="input-natural w-full">
+                                <option value="">選択してください</option>
+                                <option value="パン屋">パン屋</option>
+                                <option value="洋菓子屋">洋菓子屋</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-[#4A4A48] mb-2">
+                                <i class="fas fa-user-tie mr-2 text-[#B88A5A]"></i>オーナー名 <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="regOwnerName" required 
+                                   class="input-natural w-full" 
+                                   placeholder="山田 太郎">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-[#4A4A48] mb-2">
+                                <i class="fas fa-envelope mr-2 text-[#B88A5A]"></i>メールアドレス <span class="text-red-500">*</span>
+                            </label>
+                            <input type="email" id="regEmail" required 
+                                   class="input-natural w-full" 
+                                   placeholder="example@email.com">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-[#4A4A48] mb-2">
+                                <i class="fas fa-phone mr-2 text-[#B88A5A]"></i>電話番号
+                            </label>
+                            <input type="tel" id="regPhone" 
+                                   class="input-natural w-full" 
+                                   placeholder="090-1234-5678">
+                        </div>
+                    </div>
+                    <button type="submit" 
+                            class="btn-natural w-full py-3 rounded-full text-white font-bold mt-6" 
+                            style="background: linear-gradient(135deg, #9CAF88, #6B7F5C);">
+                        <i class="fas fa-user-plus mr-2"></i>新規登録
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+        <script>
+            // タブ切り替え
+            const loginTab = document.getElementById('loginTab')
+            const registerTab = document.getElementById('registerTab')
+            const loginForm = document.getElementById('loginForm')
+            const registerForm = document.getElementById('registerForm')
+
+            loginTab.addEventListener('click', () => {
+                loginTab.style.background = 'linear-gradient(135deg, #B88A5A, #8B6F47)'
+                loginTab.classList.add('text-white')
+                registerTab.style.background = 'white'
+                registerTab.classList.remove('text-white')
+                registerTab.classList.add('text-[#8B6F47]')
+                loginForm.classList.remove('hidden')
+                registerForm.classList.add('hidden')
+            })
+
+            registerTab.addEventListener('click', () => {
+                registerTab.style.background = 'linear-gradient(135deg, #B88A5A, #8B6F47)'
+                registerTab.classList.add('text-white')
+                loginTab.style.background = 'white'
+                loginTab.classList.remove('text-white')
+                loginTab.classList.add('text-[#8B6F47]')
+                registerForm.classList.remove('hidden')
+                loginForm.classList.add('hidden')
+            })
+
+            // ログイン処理
+            document.getElementById('loginFormElement').addEventListener('submit', async (e) => {
+                e.preventDefault()
+                const username = document.getElementById('loginUsername').value
+                const password = document.getElementById('loginPassword').value
+
+                try {
+                    const response = await axios.post('/api/auth/login', { username, password })
+                    if (response.data.user) {
+                        window.location.href = '/recipes'
+                    }
+                } catch (error) {
+                    alert(error.response?.data?.error || 'ログインに失敗しました')
+                }
+            })
+
+            // 登録処理
+            document.getElementById('registerFormElement').addEventListener('submit', async (e) => {
+                e.preventDefault()
+                const data = {
+                    username: document.getElementById('regUsername').value,
+                    password: document.getElementById('regPassword').value,
+                    business_name: document.getElementById('regBusinessName').value,
+                    business_type: document.getElementById('regBusinessType').value,
+                    owner_name: document.getElementById('regOwnerName').value,
+                    email: document.getElementById('regEmail').value,
+                    phone: document.getElementById('regPhone').value
+                }
+
+                try {
+                    await axios.post('/api/auth/register', data)
+                    alert('登録が完了しました。ログインしてください。')
+                    loginTab.click()
+                } catch (error) {
+                    alert(error.response?.data?.error || '登録に失敗しました')
+                }
+            })
+        </script>
+    </body>
+    </html>
+  `)
+})
+
+// レシピページ（認証が必要）
+app.get('/recipes', (c) => {
   return c.html(`
     <!DOCTYPE html>
     <html lang="ja">
@@ -744,6 +1121,10 @@ app.get('/', (c) => {
                             <i class="fas fa-cog mr-2"></i>
                             管理
                         </a>
+                        <button id="logoutBtn" class="btn-natural px-4 py-2 rounded-full text-[#8B6F47] bg-white border-2 border-[#E8DCC4] hover:bg-[#F5F3EE] font-medium flex items-center">
+                            <i class="fas fa-sign-out-alt mr-2"></i>
+                            <span class="hidden sm:inline">ログアウト</span>
+                        </button>
                         <button id="cartBtn" class="btn-natural relative px-5 py-3 rounded-full text-white font-medium" 
                                 style="background: linear-gradient(135deg, #B88A5A, #8B6F47);">
                             <i class="fas fa-shopping-basket mr-2"></i>
@@ -883,6 +1264,33 @@ app.get('/', (c) => {
         </div>
 
         <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+        <script>
+            // 認証チェック
+            async function checkAuth() {
+                try {
+                    const response = await axios.get('/api/auth/me')
+                    if (response.data.user) {
+                        return true
+                    }
+                } catch (error) {
+                    window.location.href = '/'
+                    return false
+                }
+            }
+            
+            // ページ読み込み時に認証チェック
+            checkAuth()
+            
+            // ログアウト
+            document.getElementById('logoutBtn').addEventListener('click', async () => {
+                try {
+                    await axios.post('/api/auth/logout')
+                    window.location.href = '/'
+                } catch (error) {
+                    console.error('ログアウトエラー:', error)
+                }
+            })
+        </script>
         <script src="/static/app.js"></script>
     </body>
     </html>
