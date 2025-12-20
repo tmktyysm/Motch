@@ -258,6 +258,92 @@ app.post('/api/local-shops', async (c) => {
   }
 })
 
+// レシピアレンジ生成API
+app.post('/api/recipes/:id/arrange', async (c) => {
+  const { env } = c
+  const recipeId = c.req.param('id')
+  
+  try {
+    const { arrangement_request } = await c.req.json()
+    
+    if (!arrangement_request) {
+      return c.json({ error: 'アレンジ希望を入力してください' }, 400)
+    }
+    
+    // 元のレシピを取得
+    const recipe = await env.DB.prepare(`
+      SELECT * FROM recipes WHERE id = ?
+    `).bind(recipeId).first()
+    
+    if (!recipe) {
+      return c.json({ error: 'レシピが見つかりません' }, 404)
+    }
+    
+    // レシピの材料を取得
+    const { results: ingredients } = await env.DB.prepare(`
+      SELECT 
+        ri.quantity,
+        ri.unit,
+        i.name,
+        i.category
+      FROM recipe_ingredients ri
+      JOIN ingredients i ON ri.ingredient_id = i.id
+      WHERE ri.recipe_id = ?
+    `).bind(recipeId).all()
+    
+    // 生成AIでアレンジレシピを生成（サンプル実装）
+    // 実際には生成AIサービスを呼び出す
+    const arrangedRecipe = {
+      original_recipe: {
+        id: recipe.id,
+        title: recipe.title,
+        category: recipe.category
+      },
+      arrangement_request: arrangement_request,
+      arranged_recipe: {
+        title: `${recipe.title}（${arrangement_request}アレンジ）`,
+        description: `元の「${recipe.title}」をベースに、${arrangement_request}のリクエストに応じてアレンジしました。`,
+        ingredients: ingredients.map(ing => ({
+          name: ing.name,
+          quantity: ing.quantity,
+          unit: ing.unit,
+          note: ''
+        })).concat([
+          // アレンジに応じた追加材料の例
+          { name: 'アレンジ用追加材料A', quantity: '適量', unit: '', note: `${arrangement_request}の風味を出すため` },
+          { name: 'アレンジ用追加材料B', quantity: '少々', unit: '', note: '仕上げに使用' }
+        ]),
+        instructions: [
+          `1. 基本の「${recipe.title}」のレシピに従って、生地を準備します。`,
+          `2. ${arrangement_request}のアレンジを加えるため、追加材料Aを混ぜ込みます。`,
+          '3. 生地を成形し、通常通りに焼成します。',
+          '4. 焼き上がったら、追加材料Bで仕上げます。',
+          `5. ${arrangement_request}風の${recipe.title}の完成です！`
+        ],
+        cooking_tips: [
+          `${arrangement_request}の風味を活かすため、追加材料は少量から試してください。`,
+          '元のレシピの良さを残しつつ、新しい味わいを楽しめます。',
+          '季節の食材を使うとさらに美味しくなります。'
+        ],
+        estimated_time: {
+          prep: recipe.prep_time || 30,
+          cook: recipe.cook_time || 40,
+          total: (recipe.prep_time || 30) + (recipe.cook_time || 40) + 10
+        },
+        difficulty: recipe.difficulty,
+        servings: recipe.servings
+      },
+      generated_at: new Date().toISOString(),
+      note: 'この内容は生成AIによって作成されたアレンジ案です。実際に調理する際は、味見をしながら調整してください。'
+    }
+    
+    return c.json(arrangedRecipe)
+  } catch (error) {
+    console.error('Recipe arrangement generation error:', error)
+    return c.json({ error: String(error) }, 500)
+  }
+})
+
 // =====================================
 // レシピAPI
 // =====================================

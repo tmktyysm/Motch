@@ -290,6 +290,42 @@ async function showRecipeDetail(recipeId) {
             </div>
           ` : ''}
           
+          <!-- AIアレンジ機能 -->
+          <div class="section-natural mt-6">
+            <h3 class="text-xl font-bold heading-elegant text-[#4A4A48] mb-4 flex items-center gap-2">
+              <i class="fas fa-wand-magic-sparkles text-[#B88A5A]"></i>
+              AIレシピアレンジ
+            </h3>
+            <p class="text-[#8B6F47] mb-4">このレシピをベースに、あなた好みのアレンジレシピを生成します</p>
+            
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-semibold text-[#4A4A48] mb-2">
+                  <i class="fas fa-lightbulb mr-2 text-[#B88A5A]"></i>
+                  アレンジ希望を入力してください
+                </label>
+                <textarea 
+                  id="arrangementInput-${recipeId}"
+                  class="input-natural w-full h-24 resize-none"
+                  placeholder="例: もっとヘルシーに、チョコレート風味、グルテンフリー、季節のフルーツを使った、など"
+                ></textarea>
+              </div>
+              
+              <button 
+                onclick="generateArrangement(${recipeId})"
+                class="btn-natural w-full py-3 rounded-full text-white font-bold"
+                style="background: linear-gradient(135deg, #9CAF88, #6B7F5C);"
+              >
+                <i class="fas fa-wand-magic-sparkles mr-2"></i>
+                アレンジレシピを生成
+              </button>
+              
+              <div id="arrangementResult-${recipeId}" class="hidden mt-4">
+                <!-- 生成結果がここに表示されます -->
+              </div>
+            </div>
+          </div>
+          
           <!-- トレンド情報 -->
           <div class="section-natural mt-6">
             <div class="flex items-center justify-between mb-4">
@@ -567,3 +603,123 @@ async function submitOrder() {
     alert('注文の送信に失敗しました。もう一度お試しください。');
   }
 }
+
+// AIアレンジレシピ生成
+async function generateArrangement(recipeId) {
+  const input = document.getElementById(`arrangementInput-${recipeId}`);
+  const resultContainer = document.getElementById(`arrangementResult-${recipeId}`);
+  
+  const arrangementRequest = input.value.trim();
+  
+  if (!arrangementRequest) {
+    alert('アレンジ希望を入力してください');
+    return;
+  }
+  
+  try {
+    // ローディング表示
+    resultContainer.innerHTML = '<div class="text-center py-8 text-[#8B6F47]">' +
+      '<i class="fas fa-spinner fa-spin text-3xl mb-2"></i>' +
+      '<p>AIがアレンジレシピを生成中...</p>' +
+      '</div>';
+    resultContainer.classList.remove('hidden');
+    
+    const response = await axios.post(`/api/recipes/${recipeId}/arrange`, {
+      arrangement_request: arrangementRequest
+    });
+    
+    const data = response.data;
+    const arranged = data.arranged_recipe;
+    
+    // 結果を表示
+    resultContainer.innerHTML = 
+      '<div class="bg-gradient-to-br from-[#F5F3EE] to-white rounded-2xl p-6 border-2 border-[#D4A574]">' +
+        '<div class="flex items-center gap-3 mb-4">' +
+          '<div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#9CAF88] to-[#6B7F5C] flex items-center justify-center">' +
+            '<i class="fas fa-wand-magic-sparkles text-white text-xl"></i>' +
+          '</div>' +
+          '<div>' +
+            '<h4 class="text-xl font-bold heading-elegant text-[#4A4A48]">' + arranged.title + '</h4>' +
+            '<p class="text-sm text-[#8B6F47]">AI生成アレンジレシピ</p>' +
+          '</div>' +
+        '</div>' +
+        
+        '<div class="mb-4">' +
+          '<p class="text-[#4A4A48]">' + arranged.description + '</p>' +
+        '</div>' +
+        
+        '<div class="grid grid-cols-3 gap-3 mb-6">' +
+          '<div class="text-center p-3 bg-white rounded-lg">' +
+            '<i class="fas fa-clock text-[#B88A5A] mb-1"></i>' +
+            '<div class="text-sm text-[#4A4A48]">準備 ' + arranged.estimated_time.prep + '分</div>' +
+          '</div>' +
+          '<div class="text-center p-3 bg-white rounded-lg">' +
+            '<i class="fas fa-fire text-[#B88A5A] mb-1"></i>' +
+            '<div class="text-sm text-[#4A4A48]">調理 ' + arranged.estimated_time.cook + '分</div>' +
+          '</div>' +
+          '<div class="text-center p-3 bg-white rounded-lg">' +
+            '<i class="fas fa-users text-[#B88A5A] mb-1"></i>' +
+            '<div class="text-sm text-[#4A4A48]">' + arranged.servings + '人分</div>' +
+          '</div>' +
+        '</div>' +
+        
+        '<div class="mb-6">' +
+          '<h5 class="font-bold text-[#4A4A48] mb-3 flex items-center gap-2">' +
+            '<i class="fas fa-shopping-basket text-[#B88A5A]"></i>材料' +
+          '</h5>' +
+          '<div class="space-y-2">' +
+            arranged.ingredients.map(ing => 
+              '<div class="flex items-start gap-2 text-sm">' +
+                '<span class="text-[#B88A5A]">•</span>' +
+                '<div class="flex-1">' +
+                  '<span class="text-[#4A4A48]">' + ing.name + '</span>' +
+                  '<span class="text-[#8B6F47] ml-2">' + ing.quantity + (ing.unit ? ' ' + ing.unit : '') + '</span>' +
+                  (ing.note ? '<div class="text-xs text-[#8B6F47] mt-1">' + ing.note + '</div>' : '') +
+                '</div>' +
+              '</div>'
+            ).join('') +
+          '</div>' +
+        '</div>' +
+        
+        '<div class="mb-6">' +
+          '<h5 class="font-bold text-[#4A4A48] mb-3 flex items-center gap-2">' +
+            '<i class="fas fa-list-ol text-[#B88A5A]"></i>作り方' +
+          '</h5>' +
+          '<div class="space-y-3">' +
+            arranged.instructions.map(step => 
+              '<div class="flex gap-3">' +
+                '<div class="flex-1 text-[#4A4A48] text-sm leading-relaxed">' + step + '</div>' +
+              '</div>'
+            ).join('') +
+          '</div>' +
+        '</div>' +
+        
+        '<div class="mb-4">' +
+          '<h5 class="font-bold text-[#4A4A48] mb-3 flex items-center gap-2">' +
+            '<i class="fas fa-lightbulb text-[#B88A5A]"></i>調理のコツ' +
+          '</h5>' +
+          '<div class="space-y-2">' +
+            arranged.cooking_tips.map(tip => 
+              '<div class="flex items-start gap-2 text-sm text-[#4A4A48]">' +
+                '<i class="fas fa-check text-[#9CAF88] mt-1"></i>' +
+                '<span>' + tip + '</span>' +
+              '</div>'
+            ).join('') +
+          '</div>' +
+        '</div>' +
+        
+        '<div class="text-xs text-[#8B6F47] p-3 bg-[#FFFEF9] rounded-lg border border-[#E8DCC4]">' +
+          '<i class="fas fa-info-circle mr-1"></i>' + data.note +
+        '</div>' +
+      '</div>';
+    
+  } catch (error) {
+    console.error('Failed to generate arrangement:', error);
+    resultContainer.innerHTML = 
+      '<div class="text-center py-6 text-red-500">' +
+        '<i class="fas fa-exclamation-triangle text-3xl mb-2"></i>' +
+        '<p>アレンジレシピの生成に失敗しました</p>' +
+      '</div>';
+  }
+}
+
