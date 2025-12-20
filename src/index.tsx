@@ -97,9 +97,11 @@ app.post('/api/auth/login', async (c) => {
     ).bind(user.id, token, expiresAt.toISOString()).run()
     
     // クッキーにトークンを設定
+    // 開発環境ではsecure: falseに設定（本番環境ではHTTPSなのでsecure: trueでOK）
+    const isProduction = c.req.url.includes('https://')
     setCookie(c, 'session_token', token, {
       httpOnly: true,
-      secure: true,
+      secure: isProduction,
       maxAge: 7 * 24 * 60 * 60,
       sameSite: 'Lax',
       path: '/'
@@ -1270,10 +1272,16 @@ app.get('/recipes', (c) => {
                 try {
                     const response = await axios.get('/api/auth/me')
                     if (response.data.user) {
+                        console.log('認証成功:', response.data.user)
                         return true
                     }
                 } catch (error) {
-                    window.location.href = '/'
+                    console.error('認証失敗:', error.response?.status, error.response?.data)
+                    // 401エラーの場合のみリダイレクト
+                    if (error.response?.status === 401) {
+                        alert('ログインが必要です')
+                        window.location.href = '/'
+                    }
                     return false
                 }
             }
