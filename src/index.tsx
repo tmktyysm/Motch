@@ -967,7 +967,30 @@ app.get('/api/orders/:id', async (c) => {
 // 管理画面ページ
 // =====================================
 
-app.get('/admin', (c) => {
+// 管理画面（管理者のみ）
+app.get('/admin', async (c) => {
+  const { env } = c
+  const token = getCookie(c, 'session_token')
+  
+  if (!token) {
+    return c.redirect('/recipes')
+  }
+  
+  try {
+    const session = await env.DB.prepare(`
+      SELECT s.*, u.role 
+      FROM sessions s
+      JOIN users u ON s.user_id = u.id
+      WHERE s.token = ? AND s.expires_at > datetime('now')
+    `).bind(token).first()
+    
+    if (!session || session.role !== 'admin') {
+      return c.redirect('/recipes')
+    }
+  } catch (error) {
+    return c.redirect('/recipes')
+  }
+  
   return c.html(`
     <!DOCTYPE html>
     <html lang="ja">
@@ -1455,7 +1478,7 @@ app.get('/recipes', (c) => {
                         </div>
                     </div>
                     <div class="flex items-center gap-3">
-                        <a href="/admin" class="btn-natural px-4 py-2 rounded-full text-[#8B6F47] bg-white border-2 border-[#E8DCC4] hover:bg-[#F5F3EE] font-medium hidden sm:flex items-center">
+                        <a href="/admin" id="adminLink" class="btn-natural px-4 py-2 rounded-full text-[#8B6F47] bg-white border-2 border-[#E8DCC4] hover:bg-[#F5F3EE] font-medium hidden sm:flex items-center">
                             <i class="fas fa-cog mr-2"></i>
                             管理
                         </a>
@@ -1655,6 +1678,15 @@ app.get('/recipes', (c) => {
                     const response = await axios.get('/api/auth/me')
                     if (response.data.user) {
                         console.log('認証成功:', response.data.user)
+                        
+                        // 管理者でない場合は管理リンクを非表示
+                        const adminLink = document.getElementById('adminLink')
+                        if (adminLink) {
+                            if (response.data.user.role !== 'admin') {
+                                adminLink.style.display = 'none'
+                            }
+                        }
+                        
                         return true
                     }
                 } catch (error) {
