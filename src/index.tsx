@@ -1511,11 +1511,8 @@ app.get('/recipes', (c) => {
         <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="section-natural text-center py-12 animate-fade-in-up">
                 <h2 class="text-3xl md:text-4xl font-bold heading-elegant text-[#4A4A48] mb-4">
-                    手作りの喜びを、あなたのキッチンに
+                    世界中のトレンドを参考に、オリジナルレシピのアイデアを共創します
                 </h2>
-                <p class="text-[#8B6F47] text-lg max-w-2xl mx-auto">
-                    プロのレシピと厳選された材料で、誰でも簡単に本格的なパン・洋菓子作りが楽しめます
-                </p>
             </div>
         </section>
 
