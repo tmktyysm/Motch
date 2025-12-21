@@ -46,7 +46,7 @@ app.get('/api/init-db', async (c) => {
 app.post('/api/auth/register', async (c) => {
   const { env } = c
   try {
-    const { username, password, business_name, business_type, owner_name, email, phone } = await c.req.json()
+    const { username, password, business_name, business_type, owner_name, email, phone, address } = await c.req.json()
     
     if (!username || !password || !business_name || !business_type || !owner_name || !email) {
       return c.json({ error: '必須項目を入力してください' }, 400)
@@ -60,8 +60,8 @@ app.post('/api/auth/register', async (c) => {
     
     // ユーザー作成
     const result = await env.DB.prepare(
-      'INSERT INTO users (username, password, business_name, business_type, owner_name, email, phone) VALUES (?, ?, ?, ?, ?, ?, ?)'
-    ).bind(username, password, business_name, business_type, owner_name, email, phone || null).run()
+      'INSERT INTO users (username, password, business_name, business_type, owner_name, email, phone, address) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+    ).bind(username, password, business_name, business_type, owner_name, email, phone || null, address || null).run()
     
     return c.json({ message: '登録完了', user_id: result.meta.last_row_id }, 201)
   } catch (error) {
@@ -238,6 +238,7 @@ app.get('/api/admin/customers', async (c) => {
         owner_name,
         email,
         phone,
+        address,
         role,
         created_at
       FROM users
@@ -1367,6 +1368,14 @@ app.get('/', (c) => {
                                    class="input-natural w-full" 
                                    placeholder="090-1234-5678">
                         </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-[#4A4A48] mb-2">
+                                <i class="fas fa-map-marker-alt mr-2 text-[#B88A5A]"></i>住所
+                            </label>
+                            <input type="text" id="regAddress" 
+                                   class="input-natural w-full" 
+                                   placeholder="例: 大阪府大阪市中央区本町1-2-3">
+                        </div>
                     </div>
                     <button type="submit" 
                             class="btn-natural w-full py-3 rounded-full text-white font-bold mt-6" 
@@ -1431,7 +1440,8 @@ app.get('/', (c) => {
                     business_type: document.getElementById('regBusinessType').value,
                     owner_name: document.getElementById('regOwnerName').value,
                     email: document.getElementById('regEmail').value,
-                    phone: document.getElementById('regPhone').value
+                    phone: document.getElementById('regPhone').value,
+                    address: document.getElementById('regAddress').value
                 }
 
                 try {

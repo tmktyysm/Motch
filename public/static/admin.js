@@ -335,6 +335,7 @@ async function loadCustomers() {
             <th class="px-4 py-3 text-left text-sm font-semibold text-[#4A4A48]">オーナー名</th>
             <th class="px-4 py-3 text-left text-sm font-semibold text-[#4A4A48]">メール</th>
             <th class="px-4 py-3 text-left text-sm font-semibold text-[#4A4A48]">電話</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold text-[#4A4A48]">住所</th>
             <th class="px-4 py-3 text-left text-sm font-semibold text-[#4A4A48]">権限</th>
             <th class="px-4 py-3 text-left text-sm font-semibold text-[#4A4A48]">登録日</th>
           </tr>
@@ -353,6 +354,7 @@ async function loadCustomers() {
               <td class="px-4 py-3 text-sm text-[#4A4A48]">${customer.owner_name}</td>
               <td class="px-4 py-3 text-sm text-[#8B6F47]">${customer.email}</td>
               <td class="px-4 py-3 text-sm text-[#8B6F47]">${customer.phone || '-'}</td>
+              <td class="px-4 py-3 text-sm text-[#8B6F47]">${customer.address || '-'}</td>
               <td class="px-4 py-3 text-sm">
                 <span class="px-2 py-1 rounded-full text-xs ${customer.role === 'admin' ? 'bg-[#B88A5A] text-white' : 'bg-gray-200 text-gray-700'}">
                   ${customer.role === 'admin' ? '管理者' : '一般'}
