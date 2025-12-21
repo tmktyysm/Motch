@@ -1019,10 +1019,10 @@ app.get('/admin', async (c) => {
                             <p class="text-xs text-[#8B6F47] font-light">レシピ管理システム</p>
                         </div>
                     </div>
-                    <a href="/" class="btn-natural px-5 py-3 rounded-full text-white font-medium" 
+                    <a href="/recipes" class="btn-natural px-5 py-3 rounded-full text-white font-medium" 
                        style="background: linear-gradient(135deg, #B88A5A, #8B6F47);">
-                        <i class="fas fa-home mr-2"></i>
-                        <span class="hidden sm:inline">トップページへ</span>
+                        <i class="fas fa-book mr-2"></i>
+                        <span class="hidden sm:inline">レシピページへ</span>
                     </a>
                 </div>
             </div>
