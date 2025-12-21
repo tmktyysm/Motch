@@ -57,6 +57,13 @@ function switchTab(tabName) {
     content.classList.add('hidden');
   });
   document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+  
+  // タブ切り替え時にデータを読み込む
+  if (tabName === 'customers') {
+    loadCustomers();
+  } else if (tabName === 'orders') {
+    loadOrders();
+  }
 }
 
 // 材料一覧の読み込み
@@ -302,3 +309,198 @@ function showToast(message, type = 'success') {
     setTimeout(() => toast.remove(), 300);
   }, 3000);
 }
+
+// 顧客情報一覧を読み込む
+async function loadCustomers() {
+  const container = document.getElementById('customersList');
+  container.innerHTML = '<p class="text-center text-[#8B6F47] py-8"><i class="fas fa-spinner fa-spin mr-2"></i>読み込み中...</p>';
+  
+  try {
+    const response = await axios.get('/api/admin/customers');
+    const customers = response.data.customers;
+    
+    if (customers.length === 0) {
+      container.innerHTML = '<p class="text-center text-[#8B6F47] py-8">顧客情報がありません</p>';
+      return;
+    }
+    
+    container.innerHTML = `
+      <table class="w-full">
+        <thead class="bg-[#F5F3EE]">
+          <tr>
+            <th class="px-4 py-3 text-left text-sm font-semibold text-[#4A4A48]">ID</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold text-[#4A4A48]">ユーザー名</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold text-[#4A4A48]">店舗名</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold text-[#4A4A48]">業態</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold text-[#4A4A48]">オーナー名</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold text-[#4A4A48]">メール</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold text-[#4A4A48]">電話</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold text-[#4A4A48]">権限</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold text-[#4A4A48]">登録日</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-[#E8DCC4]">
+          ${customers.map(customer => `
+            <tr class="hover:bg-[#FFFEF9]">
+              <td class="px-4 py-3 text-sm text-[#4A4A48]">${customer.id}</td>
+              <td class="px-4 py-3 text-sm text-[#4A4A48] font-semibold">${customer.username}</td>
+              <td class="px-4 py-3 text-sm text-[#4A4A48]">${customer.business_name}</td>
+              <td class="px-4 py-3 text-sm">
+                <span class="px-2 py-1 rounded-full text-xs ${customer.business_type === 'パン屋' ? 'bg-[#F5E6D3] text-[#8B6F47]' : 'bg-[#E8DCC4] text-[#6B7F5C]'}">
+                  ${customer.business_type}
+                </span>
+              </td>
+              <td class="px-4 py-3 text-sm text-[#4A4A48]">${customer.owner_name}</td>
+              <td class="px-4 py-3 text-sm text-[#8B6F47]">${customer.email}</td>
+              <td class="px-4 py-3 text-sm text-[#8B6F47]">${customer.phone || '-'}</td>
+              <td class="px-4 py-3 text-sm">
+                <span class="px-2 py-1 rounded-full text-xs ${customer.role === 'admin' ? 'bg-[#B88A5A] text-white' : 'bg-gray-200 text-gray-700'}">
+                  ${customer.role === 'admin' ? '管理者' : '一般'}
+                </span>
+              </td>
+              <td class="px-4 py-3 text-sm text-[#8B6F47]">${new Date(customer.created_at).toLocaleDateString('ja-JP')}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  } catch (error) {
+    console.error('Failed to load customers:', error);
+    if (error.response?.status === 403) {
+      container.innerHTML = '<p class="text-center text-red-500 py-8"><i class="fas fa-lock mr-2"></i>管理者権限が必要です</p>';
+    } else {
+      container.innerHTML = '<p class="text-center text-red-500 py-8">顧客情報の読み込みに失敗しました</p>';
+    }
+  }
+}
+
+// 注文状況一覧を読み込む
+async function loadOrders() {
+  const container = document.getElementById('ordersList');
+  container.innerHTML = '<p class="text-center text-[#8B6F47] py-8"><i class="fas fa-spinner fa-spin mr-2"></i>読み込み中...</p>';
+  
+  try {
+    const response = await axios.get('/api/admin/orders');
+    const orders = response.data.orders;
+    
+    if (orders.length === 0) {
+      container.innerHTML = '<p class="text-center text-[#8B6F47] py-8">注文情報がありません</p>';
+      return;
+    }
+    
+    container.innerHTML = `
+      <table class="w-full">
+        <thead class="bg-[#F5F3EE]">
+          <tr>
+            <th class="px-4 py-3 text-left text-sm font-semibold text-[#4A4A48]">注文ID</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold text-[#4A4A48]">顧客名</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold text-[#4A4A48]">メール</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold text-[#4A4A48]">電話</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold text-[#4A4A48]">商品数</th>
+            <th class="px-4 py-3 text-right text-sm font-semibold text-[#4A4A48]">合計金額</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold text-[#4A4A48]">注文日時</th>
+            <th class="px-4 py-3 text-center text-sm font-semibold text-[#4A4A48]">操作</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-[#E8DCC4]">
+          ${orders.map(order => `
+            <tr class="hover:bg-[#FFFEF9]">
+              <td class="px-4 py-3 text-sm text-[#4A4A48] font-semibold">#${order.id}</td>
+              <td class="px-4 py-3 text-sm text-[#4A4A48]">${order.customer_name}</td>
+              <td class="px-4 py-3 text-sm text-[#8B6F47]">${order.customer_email}</td>
+              <td class="px-4 py-3 text-sm text-[#8B6F47]">${order.customer_phone || '-'}</td>
+              <td class="px-4 py-3 text-sm text-[#4A4A48]">${order.item_count}点</td>
+              <td class="px-4 py-3 text-sm text-right font-bold text-[#B88A5A]">¥${order.total_amount.toLocaleString()}</td>
+              <td class="px-4 py-3 text-sm text-[#8B6F47]">${new Date(order.created_at).toLocaleString('ja-JP')}</td>
+              <td class="px-4 py-3 text-center">
+                <button onclick="viewOrderDetail(${order.id})" class="text-[#B88A5A] hover:text-[#8B6F47]">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  } catch (error) {
+    console.error('Failed to load orders:', error);
+    if (error.response?.status === 403) {
+      container.innerHTML = '<p class="text-center text-red-500 py-8"><i class="fas fa-lock mr-2"></i>管理者権限が必要です</p>';
+    } else {
+      container.innerHTML = '<p class="text-center text-red-500 py-8">注文情報の読み込みに失敗しました</p>';
+    }
+  }
+}
+
+// 注文詳細を表示
+async function viewOrderDetail(orderId) {
+  try {
+    const response = await axios.get(`/api/admin/orders/${orderId}`);
+    const { order, items } = response.data;
+    
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+    modal.onclick = (e) => {
+      if (e.target === modal) modal.remove();
+    };
+    
+    modal.innerHTML = '<div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6">' +
+      '<div class="flex justify-between items-center mb-6">' +
+        '<h3 class="text-2xl font-bold heading-elegant text-[#4A4A48]">注文詳細 #' + order.id + '</h3>' +
+        '<button onclick="this.closest(\'.fixed\').remove()" class="w-10 h-10 rounded-full bg-[#F5F3EE] hover:bg-[#E8DCC4] flex items-center justify-center text-[#8B6F47]">' +
+          '<i class="fas fa-times"></i>' +
+        '</button>' +
+      '</div>' +
+      '<div class="space-y-4">' +
+        '<div class="grid grid-cols-2 gap-4">' +
+          '<div>' +
+            '<p class="text-sm text-[#8B6F47] mb-1">顧客名</p>' +
+            '<p class="font-semibold text-[#4A4A48]">' + order.customer_name + '</p>' +
+          '</div>' +
+          '<div>' +
+            '<p class="text-sm text-[#8B6F47] mb-1">メール</p>' +
+            '<p class="text-[#4A4A48]">' + order.customer_email + '</p>' +
+          '</div>' +
+          '<div>' +
+            '<p class="text-sm text-[#8B6F47] mb-1">電話</p>' +
+            '<p class="text-[#4A4A48]">' + (order.customer_phone || '-') + '</p>' +
+          '</div>' +
+          '<div>' +
+            '<p class="text-sm text-[#8B6F47] mb-1">注文日時</p>' +
+            '<p class="text-[#4A4A48]">' + new Date(order.created_at).toLocaleString('ja-JP') + '</p>' +
+          '</div>' +
+        '</div>' +
+        (order.notes ? 
+          '<div>' +
+            '<p class="text-sm text-[#8B6F47] mb-1">備考</p>' +
+            '<p class="text-[#4A4A48]">' + order.notes + '</p>' +
+          '</div>'
+        : '') +
+        '<div class="border-t border-[#E8DCC4] pt-4">' +
+          '<h4 class="font-bold text-[#4A4A48] mb-3">注文商品</h4>' +
+          '<div class="space-y-2">' +
+            items.map(item => 
+              '<div class="flex justify-between items-center p-3 bg-[#FFFEF9] rounded-lg">' +
+                '<div>' +
+                  '<p class="font-semibold text-[#4A4A48]">' + item.ingredient_name + '</p>' +
+                  '<p class="text-sm text-[#8B6F47]">' + item.quantity + ' × ¥' + item.price_per_unit.toLocaleString() + '</p>' +
+                '</div>' +
+                '<p class="font-bold text-[#B88A5A]">¥' + item.subtotal.toLocaleString() + '</p>' +
+              '</div>'
+            ).join('') +
+          '</div>' +
+        '</div>' +
+        '<div class="border-t border-[#E8DCC4] pt-4 flex justify-between items-center">' +
+          '<p class="text-lg font-bold text-[#4A4A48]">合計金額</p>' +
+          '<p class="text-2xl font-bold heading-elegant text-[#B88A5A]">¥' + order.total_amount.toLocaleString() + '</p>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+    
+    document.body.appendChild(modal);
+  } catch (error) {
+    console.error('Failed to load order detail:', error);
+    alert('注文詳細の読み込みに失敗しました');
+  }
+}
+

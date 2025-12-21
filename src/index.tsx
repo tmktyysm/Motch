@@ -115,7 +115,8 @@ app.post('/api/auth/login', async (c) => {
         business_name: user.business_name,
         business_type: user.business_type,
         owner_name: user.owner_name,
-        email: user.email
+        email: user.email,
+        role: user.role
       }
     })
   } catch (error) {
@@ -172,9 +173,141 @@ app.get('/api/auth/me', async (c) => {
         business_name: session.business_name,
         business_type: session.business_type,
         owner_name: session.owner_name,
-        email: session.email
+        email: session.email,
+        role: session.role
       }
     })
+  } catch (error) {
+    return c.json({ error: String(error) }, 500)
+  }
+})
+
+// =====================================
+// 管理者用API
+// =====================================
+
+// 管理者権限チェックミドルウェア
+async function checkAdminRole(c: any, next: any) {
+  const { env } = c
+  const token = getCookie(c, 'session_token')
+  
+  if (!token) {
+    return c.json({ error: '認証が必要です' }, 401)
+  }
+  
+  try {
+    const session = await env.DB.prepare(`
+      SELECT s.*, u.role 
+      FROM sessions s
+      JOIN users u ON s.user_id = u.id
+      WHERE s.token = ? AND s.expires_at > datetime('now')
+    `).bind(token).first()
+    
+    if (!session) {
+      return c.json({ error: 'セッションが無効です' }, 401)
+    }
+    
+    if (session.role !== 'admin') {
+      return c.json({ error: '管理者権限が必要です' }, 403)
+    }
+    
+    // ユーザー情報をコンテキストに保存
+    c.set('userId', session.user_id)
+    c.set('userRole', session.role)
+    
+    await next()
+  } catch (error) {
+    return c.json({ error: String(error) }, 500)
+  }
+}
+
+// 顧客情報一覧取得（管理者のみ）
+app.get('/api/admin/customers', async (c) => {
+  await checkAdminRole(c, async () => {})
+  if (c.res.status !== undefined && c.res.status !== 200) return c.res
+  
+  const { env } = c
+  
+  try {
+    const { results: customers } = await env.DB.prepare(`
+      SELECT 
+        id,
+        username,
+        business_name,
+        business_type,
+        owner_name,
+        email,
+        phone,
+        role,
+        created_at
+      FROM users
+      ORDER BY created_at DESC
+    `).all()
+    
+    return c.json({ customers })
+  } catch (error) {
+    return c.json({ error: String(error) }, 500)
+  }
+})
+
+// 注文状況一覧取得（管理者のみ）
+app.get('/api/admin/orders', async (c) => {
+  await checkAdminRole(c, async () => {})
+  if (c.res.status !== undefined && c.res.status !== 200) return c.res
+  
+  const { env } = c
+  
+  try {
+    const { results: orders } = await env.DB.prepare(`
+      SELECT 
+        o.id,
+        o.customer_name,
+        o.customer_email,
+        o.customer_phone,
+        o.notes,
+        o.total_amount,
+        o.created_at,
+        COUNT(oi.id) as item_count
+      FROM orders o
+      LEFT JOIN order_items oi ON o.id = oi.order_id
+      GROUP BY o.id
+      ORDER BY o.created_at DESC
+    `).all()
+    
+    return c.json({ orders })
+  } catch (error) {
+    return c.json({ error: String(error) }, 500)
+  }
+})
+
+// 注文詳細取得（管理者のみ）
+app.get('/api/admin/orders/:id', async (c) => {
+  await checkAdminRole(c, async () => {})
+  if (c.res.status !== undefined && c.res.status !== 200) return c.res
+  
+  const { env } = c
+  const orderId = c.req.param('id')
+  
+  try {
+    const order = await env.DB.prepare(`
+      SELECT * FROM orders WHERE id = ?
+    `).bind(orderId).first()
+    
+    if (!order) {
+      return c.json({ error: '注文が見つかりません' }, 404)
+    }
+    
+    const { results: items } = await env.DB.prepare(`
+      SELECT 
+        oi.*,
+        i.name as ingredient_name,
+        i.category as ingredient_category
+      FROM order_items oi
+      JOIN ingredients i ON oi.ingredient_id = i.id
+      WHERE oi.order_id = ?
+    `).bind(orderId).all()
+    
+    return c.json({ order, items })
   } catch (error) {
     return c.json({ error: String(error) }, 500)
   }
@@ -413,8 +546,11 @@ app.get('/api/recipes/:id', async (c) => {
   }
 })
 
-// レシピ作成
+// レシピ作成（管理者のみ）
 app.post('/api/recipes', async (c) => {
+  await checkAdminRole(c, async () => {})
+  if (c.res.status !== undefined && c.res.status !== 200) return c.res
+  
   const { env } = c
   
   try {
@@ -483,8 +619,11 @@ app.post('/api/recipes', async (c) => {
   }
 })
 
-// レシピ更新
+// レシピ更新（管理者のみ）
 app.put('/api/recipes/:id', async (c) => {
+  await checkAdminRole(c, async () => {})
+  if (c.res.status !== undefined && c.res.status !== 200) return c.res
+  
   const { env } = c
   const recipeId = c.req.param('id')
   
@@ -573,8 +712,11 @@ app.put('/api/recipes/:id', async (c) => {
   }
 })
 
-// レシピ削除
+// レシピ削除（管理者のみ）
 app.delete('/api/recipes/:id', async (c) => {
+  await checkAdminRole(c, async () => {})
+  if (c.res.status !== undefined && c.res.status !== 200) return c.res
+  
   const { env } = c
   const recipeId = c.req.param('id')
   
@@ -866,12 +1008,18 @@ app.get('/admin', (c) => {
         <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <!-- タブナビゲーション -->
             <div class="mb-8">
-                <div class="flex gap-3 border-b border-[#E8DCC4]">
-                    <button class="tab-btn px-6 py-3 font-semibold text-[#B88A5A] border-b-2 border-[#B88A5A]" data-tab="recipes">
+                <div class="flex gap-3 border-b border-[#E8DCC4] overflow-x-auto">
+                    <button class="tab-btn px-6 py-3 font-semibold text-[#B88A5A] border-b-2 border-[#B88A5A] whitespace-nowrap" data-tab="recipes">
                         <i class="fas fa-book mr-2"></i>レシピ管理
                     </button>
-                    <button class="tab-btn px-6 py-3 font-semibold text-[#8B6F47] hover:text-[#B88A5A]" data-tab="create">
+                    <button class="tab-btn px-6 py-3 font-semibold text-[#8B6F47] hover:text-[#B88A5A] whitespace-nowrap" data-tab="create">
                         <i class="fas fa-plus mr-2"></i>新規作成
+                    </button>
+                    <button class="tab-btn px-6 py-3 font-semibold text-[#8B6F47] hover:text-[#B88A5A] whitespace-nowrap" data-tab="customers">
+                        <i class="fas fa-users mr-2"></i>顧客管理
+                    </button>
+                    <button class="tab-btn px-6 py-3 font-semibold text-[#8B6F47] hover:text-[#B88A5A] whitespace-nowrap" data-tab="orders">
+                        <i class="fas fa-shopping-cart mr-2"></i>注文管理
                     </button>
                 </div>
             </div>
@@ -1026,6 +1174,30 @@ app.get('/admin', (c) => {
                             </button>
                         </div>
                     </form>
+                </div>
+            </div>
+
+            <!-- 顧客管理タブ -->
+            <div id="customers-tab" class="tab-content hidden">
+                <div class="section-natural">
+                    <h2 class="text-xl font-bold heading-elegant text-[#4A4A48] mb-6">
+                        <i class="fas fa-users mr-2"></i>顧客情報一覧
+                    </h2>
+                    <div id="customersList" class="overflow-x-auto">
+                        <p class="text-center text-[#8B6F47] py-8">読み込み中...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 注文管理タブ -->
+            <div id="orders-tab" class="tab-content hidden">
+                <div class="section-natural">
+                    <h2 class="text-xl font-bold heading-elegant text-[#4A4A48] mb-6">
+                        <i class="fas fa-shopping-cart mr-2"></i>注文状況一覧
+                    </h2>
+                    <div id="ordersList" class="overflow-x-auto">
+                        <p class="text-center text-[#8B6F47] py-8">読み込み中...</p>
+                    </div>
                 </div>
             </div>
         </main>
