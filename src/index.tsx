@@ -1523,7 +1523,7 @@ app.get('/recipes', (c) => {
                 <div class="text-center mb-6">
                     <h3 class="text-2xl font-bold heading-elegant text-[#4A4A48] mb-2">
                         <i class="fas fa-map-marker-alt mr-2 text-[#B88A5A]"></i>
-                        地域のおすすめ店舗を探す
+                        世界中の気になる地域の店舗を調べる
                     </h3>
                     <p class="text-[#8B6F47]">お住まいの地域で人気のパン屋・洋菓子屋とその看板商品をご紹介</p>
                 </div>
