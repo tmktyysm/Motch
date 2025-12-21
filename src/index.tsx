@@ -1511,7 +1511,8 @@ app.get('/recipes', (c) => {
         <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="section-natural text-center py-12 animate-fade-in-up">
                 <h2 class="text-3xl md:text-4xl font-bold heading-elegant text-[#4A4A48] mb-4">
-                    世界中のトレンドを参考に、オリジナルレシピのアイデアを共創します
+                    世界中のトレンドを参考に、<br>
+                    オリジナルレシピのアイデアを共創します
                 </h2>
             </div>
         </section>
