@@ -199,16 +199,15 @@ async function showRecipeDetail(recipeId) {
         </div>
         
         <div class="p-6 overflow-y-auto" style="max-height: calc(90vh - 110px);">
-          <!-- 動画 -->
-          ${recipe.video_url ? `
-            <div class="mb-6 relative pb-56 rounded-2xl overflow-hidden shadow-lg">
-              <iframe 
-                class="absolute inset-0 w-full h-full"
-                src="${recipe.video_url}" 
-                frameborder="0" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                allowfullscreen
-              ></iframe>
+          <!-- 画像 -->
+          ${recipe.image_url ? `
+            <div class="mb-6 rounded-2xl overflow-hidden shadow-lg">
+              <img 
+                src="${recipe.image_url}" 
+                alt="${recipe.title}"
+                class="w-full h-80 object-cover"
+                onerror="this.src='https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&q=80'"
+              />
             </div>
           ` : ''}
           
