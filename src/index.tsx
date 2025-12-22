@@ -1754,18 +1754,8 @@ app.get('/recipes', (c) => {
             </div>
         </header>
 
-        <!-- ヒーローセクション -->
-        <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div class="section-natural text-center py-12 animate-fade-in-up">
-                <h2 class="text-3xl md:text-4xl font-bold heading-elegant text-[#4A4A48] mb-4">
-                    世界中のトレンドを参考に、<br>
-                    オリジナルレシピのアイデアを共創します
-                </h2>
-            </div>
-        </section>
-
         <!-- 地域検索セクション -->
-        <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+        <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="section-natural rounded-2xl p-8 animate-fade-in-up" style="animation-delay: 0.2s;">
                 <div class="text-center mb-6">
                     <h3 class="text-2xl font-bold heading-elegant text-[#4A4A48] mb-2">
