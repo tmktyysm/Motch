@@ -1277,14 +1277,17 @@ app.get('/', (c) => {
 
         <!-- ヒーローセクション -->
         <section class="relative h-[600px] overflow-hidden">
-            <div class="absolute inset-0 bg-gradient-to-r from-[#8B6F47]/80 to-[#B88A5A]/60"></div>
+            <img src="https://images.unsplash.com/photo-1509440159596-0249088772ff?w=1600&q=80" 
+                 alt="Artisan Bakery" 
+                 class="absolute inset-0 w-full h-full object-cover">
+            <div class="absolute inset-0 bg-gradient-to-r from-[#8B6F47]/85 to-[#B88A5A]/70"></div>
             <div class="absolute inset-0 flex items-center justify-center text-center text-white px-4">
                 <div class="max-w-4xl animate-fade-in-up">
-                    <h2 class="text-4xl md:text-6xl font-bold heading-elegant mb-6">
+                    <h2 class="text-4xl md:text-6xl font-bold heading-elegant mb-6 drop-shadow-lg">
                         世界中のトレンドを参考に、<br>
                         オリジナルレシピのアイデアを共創します
                     </h2>
-                    <p class="text-xl md:text-2xl mb-8 text-white/90">
+                    <p class="text-xl md:text-2xl mb-8 text-white/95 drop-shadow-md">
                         グローバルな視点から、あなたのお店だけの特別なレシピを
                     </p>
                     <button onclick="scrollToLogin()" class="btn-natural px-8 py-4 rounded-full text-white font-bold text-lg shadow-xl hover:shadow-2xl transition-all" 
@@ -1319,9 +1322,10 @@ app.get('/', (c) => {
                     </p>
                 </div>
                 <div class="order-1 md:order-2">
-                    <div class="section-natural p-8 rounded-2xl text-center">
-                        <i class="fas fa-map-marked-alt text-8xl text-[#B88A5A] mb-4"></i>
-                        <p class="text-[#8B6F47]">グローバルトレンド調査</p>
+                    <div class="rounded-2xl overflow-hidden shadow-xl">
+                        <img src="https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=800&q=80" 
+                             alt="World Bakery Trends" 
+                             class="w-full h-80 object-cover">
                     </div>
                 </div>
             </div>
@@ -1329,9 +1333,10 @@ app.get('/', (c) => {
             <!-- Value 2 -->
             <div class="grid md:grid-cols-2 gap-12 items-center mb-20">
                 <div>
-                    <div class="section-natural p-8 rounded-2xl text-center">
-                        <i class="fas fa-robot text-8xl text-[#B88A5A] mb-4"></i>
-                        <p class="text-[#8B6F47]">AIレシピアレンジ機能</p>
+                    <div class="rounded-2xl overflow-hidden shadow-xl">
+                        <img src="https://images.unsplash.com/photo-1517433670267-08bbd4be890f?w=800&q=80" 
+                             alt="Pastry and Sweets" 
+                             class="w-full h-80 object-cover">
                     </div>
                 </div>
                 <div>
@@ -1363,9 +1368,10 @@ app.get('/', (c) => {
                     </p>
                 </div>
                 <div class="order-1 md:order-2">
-                    <div class="section-natural p-8 rounded-2xl text-center">
-                        <i class="fas fa-store text-8xl text-[#B88A5A] mb-4"></i>
-                        <p class="text-[#8B6F47]">プロ仕様の管理機能</p>
+                    <div class="rounded-2xl overflow-hidden shadow-xl">
+                        <img src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=800&q=80" 
+                             alt="Professional Cafe" 
+                             class="w-full h-80 object-cover">
                     </div>
                 </div>
             </div>
