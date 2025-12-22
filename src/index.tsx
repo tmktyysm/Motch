@@ -1249,33 +1249,272 @@ app.get('/', (c) => {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>ナチュラルベーカリー - ログイン</title>
+        <title>ナチュラルベーカリー - 世界のトレンドから生まれるレシピ共創プラットフォーム</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
         <link href="/static/style.css" rel="stylesheet">
     </head>
-    <body class="bg-gradient-to-br from-[#FAF8F3] to-[#FFFEF9] min-h-screen flex items-center justify-center p-4">
-        <div class="w-full max-w-md">
-            <!-- ロゴセクション -->
-            <div class="text-center mb-8 animate-fade-in-up">
-                <div class="inline-block w-20 h-20 rounded-full bg-gradient-to-br from-[#D4A574] to-[#B88A5A] flex items-center justify-center shadow-lg mb-4">
-                    <i class="fas fa-wheat-awn text-white text-3xl"></i>
+    <body class="bg-gradient-to-br from-[#FAF8F3] to-[#FFFEF9]">
+        <!-- ヘッダー -->
+        <header class="glass-effect sticky top-0 z-40 border-b border-[#E8DCC4] border-opacity-30">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#D4A574] to-[#B88A5A] flex items-center justify-center shadow-md">
+                            <i class="fas fa-wheat-awn text-white text-lg"></i>
+                        </div>
+                        <h1 class="text-xl md:text-2xl font-bold heading-elegant text-gradient">
+                            ナチュラルベーカリー
+                        </h1>
+                    </div>
+                    <button onclick="scrollToLogin()" class="btn-natural px-6 py-2 rounded-full text-white font-medium" 
+                            style="background: linear-gradient(135deg, #B88A5A, #8B6F47);">
+                        <i class="fas fa-sign-in-alt mr-2"></i>ログイン
+                    </button>
                 </div>
-                <h1 class="text-3xl font-bold heading-elegant text-gradient mb-2">
-                    ナチュラルベーカリー
-                </h1>
-                <p class="text-[#8B6F47]">プロのレシピと厳選された材料をお届け</p>
+            </div>
+        </header>
+
+        <!-- ヒーローセクション -->
+        <section class="relative h-[600px] overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-r from-[#8B6F47]/80 to-[#B88A5A]/60"></div>
+            <div class="absolute inset-0 flex items-center justify-center text-center text-white px-4">
+                <div class="max-w-4xl animate-fade-in-up">
+                    <h2 class="text-4xl md:text-6xl font-bold heading-elegant mb-6">
+                        世界中のトレンドを参考に、<br>
+                        オリジナルレシピのアイデアを共創します
+                    </h2>
+                    <p class="text-xl md:text-2xl mb-8 text-white/90">
+                        グローバルな視点から、あなたのお店だけの特別なレシピを
+                    </p>
+                    <button onclick="scrollToLogin()" class="btn-natural px-8 py-4 rounded-full text-white font-bold text-lg shadow-xl hover:shadow-2xl transition-all" 
+                            style="background: linear-gradient(135deg, #9CAF88, #6B7F5C);">
+                        <i class="fas fa-rocket mr-2"></i>今すぐ始める
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 私たちのこだわり -->
+        <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+            <div class="text-center mb-16">
+                <h3 class="text-3xl md:text-4xl font-bold heading-elegant text-[#4A4A48] mb-4">
+                    私たちのこだわり
+                </h3>
+                <p class="text-[#8B6F47] text-lg">Our Values</p>
             </div>
 
-            <!-- タブボタン -->
-            <div class="flex gap-2 mb-6">
-                <button id="loginTab" class="flex-1 py-3 rounded-full font-bold text-white" style="background: linear-gradient(135deg, #B88A5A, #8B6F47);">
-                    <i class="fas fa-sign-in-alt mr-2"></i>ログイン
-                </button>
-                <button id="registerTab" class="flex-1 py-3 rounded-full font-bold text-[#8B6F47] bg-white border-2 border-[#E8DCC4]">
-                    <i class="fas fa-user-plus mr-2"></i>新規登録
-                </button>
+            <!-- Value 1 -->
+            <div class="grid md:grid-cols-2 gap-12 items-center mb-20">
+                <div class="order-2 md:order-1">
+                    <h4 class="text-2xl md:text-3xl font-bold heading-elegant text-[#4A4A48] mb-4">
+                        <i class="fas fa-globe mr-3 text-[#B88A5A]"></i>
+                        世界中のトレンドを調査
+                    </h4>
+                    <p class="text-lg text-[#8B6F47] mb-4">
+                        パリ、ニューヨーク、東京、ソウルなど、世界中の主要都市で話題のパン・洋菓子店の情報をリアルタイムで収集。グローバルなトレンドを常に把握できます。
+                    </p>
+                    <p class="text-lg text-[#8B6F47]">
+                        地域検索機能で、気になる都市の人気店舗と看板商品を簡単にチェック。海外の最新トレンドを自店舗のレシピ開発に活かせます。
+                    </p>
+                </div>
+                <div class="order-1 md:order-2">
+                    <div class="section-natural p-8 rounded-2xl text-center">
+                        <i class="fas fa-map-marked-alt text-8xl text-[#B88A5A] mb-4"></i>
+                        <p class="text-[#8B6F47]">グローバルトレンド調査</p>
+                    </div>
+                </div>
             </div>
+
+            <!-- Value 2 -->
+            <div class="grid md:grid-cols-2 gap-12 items-center mb-20">
+                <div>
+                    <div class="section-natural p-8 rounded-2xl text-center">
+                        <i class="fas fa-robot text-8xl text-[#B88A5A] mb-4"></i>
+                        <p class="text-[#8B6F47]">AIレシピアレンジ機能</p>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-2xl md:text-3xl font-bold heading-elegant text-[#4A4A48] mb-4">
+                        <i class="fas fa-magic mr-3 text-[#B88A5A]"></i>
+                        AIがアレンジ案を提案
+                    </h4>
+                    <p class="text-lg text-[#8B6F47] mb-4">
+                        既存のレシピをベースに、「もっとヘルシーに」「チョコレート風味を追加」「グルテンフリーにアレンジ」など、あなたのアイデアに合わせてAIが最適なアレンジ案を生成。
+                    </p>
+                    <p class="text-lg text-[#8B6F47]">
+                        材料の調整、作り方の変更、調理のコツまで、実践的なアドバイスで新しいレシピ開発をサポートします。
+                    </p>
+                </div>
+            </div>
+
+            <!-- Value 3 -->
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div class="order-2 md:order-1">
+                    <h4 class="text-2xl md:text-3xl font-bold heading-elegant text-[#4A4A48] mb-4">
+                        <i class="fas fa-users mr-3 text-[#B88A5A]"></i>
+                        プロフェッショナル向けプラットフォーム
+                    </h4>
+                    <p class="text-lg text-[#8B6F47] mb-4">
+                        パン屋・洋菓子店のオーナーや研究開発担当者のために設計されたプラットフォーム。業務利用に特化した機能で、効率的な商品開発を実現します。
+                    </p>
+                    <p class="text-lg text-[#8B6F47]">
+                        レシピ管理、材料発注、顧客管理まで、お店の運営に必要な機能を統合。一つのプラットフォームで完結します。
+                    </p>
+                </div>
+                <div class="order-1 md:order-2">
+                    <div class="section-natural p-8 rounded-2xl text-center">
+                        <i class="fas fa-store text-8xl text-[#B88A5A] mb-4"></i>
+                        <p class="text-[#8B6F47]">プロ仕様の管理機能</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- サービス紹介 -->
+        <section class="bg-gradient-to-br from-[#F5F3EE] to-[#FFFEF9] py-20">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16">
+                    <h3 class="text-3xl md:text-4xl font-bold heading-elegant text-[#4A4A48] mb-4">
+                        サービス紹介
+                    </h3>
+                    <p class="text-[#8B6F47] text-lg">Service</p>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-8">
+                    <!-- Service 1 -->
+                    <div class="section-natural p-8 rounded-2xl hover:shadow-xl transition-all">
+                        <div class="text-center mb-6">
+                            <i class="fas fa-search text-6xl text-[#B88A5A] mb-4"></i>
+                        </div>
+                        <h4 class="text-xl font-bold heading-elegant text-[#4A4A48] mb-4 text-center">
+                            世界の店舗検索
+                        </h4>
+                        <p class="text-[#8B6F47] text-center">
+                            世界中の地域で人気のパン屋・洋菓子屋とその看板商品を検索。トレンド調査や市場分析に活用できます。
+                        </p>
+                    </div>
+
+                    <!-- Service 2 -->
+                    <div class="section-natural p-8 rounded-2xl hover:shadow-xl transition-all">
+                        <div class="text-center mb-6">
+                            <i class="fas fa-book text-6xl text-[#B88A5A] mb-4"></i>
+                        </div>
+                        <h4 class="text-xl font-bold heading-elegant text-[#4A4A48] mb-4 text-center">
+                            レシピ管理
+                        </h4>
+                        <p class="text-[#8B6F47] text-center">
+                            レシピの作成、編集、管理を一元化。材料リスト、作り方、動画など、必要な情報をすべて管理できます。
+                        </p>
+                    </div>
+
+                    <!-- Service 3 -->
+                    <div class="section-natural p-8 rounded-2xl hover:shadow-xl transition-all">
+                        <div class="text-center mb-6">
+                            <i class="fas fa-lightbulb text-6xl text-[#B88A5A] mb-4"></i>
+                        </div>
+                        <h4 class="text-xl font-bold heading-elegant text-[#4A4A48] mb-4 text-center">
+                            AIレシピアレンジ
+                        </h4>
+                        <p class="text-[#8B6F47] text-center">
+                            既存レシピをAIが自動でアレンジ提案。ヘルシー版、季節限定版など、アイデアを形にします。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ご利用の流れ -->
+        <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+            <div class="text-center mb-16">
+                <h3 class="text-3xl md:text-4xl font-bold heading-elegant text-[#4A4A48] mb-4">
+                    ご利用の流れ
+                </h3>
+                <p class="text-[#8B6F47] text-lg">Flow</p>
+            </div>
+
+            <div class="space-y-12">
+                <!-- Step 1 -->
+                <div class="flex items-start gap-6">
+                    <div class="flex-shrink-0 w-20 h-20 rounded-full bg-gradient-to-br from-[#D4A574] to-[#B88A5A] flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+                        01
+                    </div>
+                    <div class="flex-1">
+                        <h4 class="text-2xl font-bold heading-elegant text-[#4A4A48] mb-3">
+                            無料アカウント登録
+                        </h4>
+                        <p class="text-[#8B6F47] text-lg">
+                            店舗情報を入力して、すぐに利用開始。登録は3分で完了します。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="flex items-start gap-6">
+                    <div class="flex-shrink-0 w-20 h-20 rounded-full bg-gradient-to-br from-[#D4A574] to-[#B88A5A] flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+                        02
+                    </div>
+                    <div class="flex-1">
+                        <h4 class="text-2xl font-bold heading-elegant text-[#4A4A48] mb-3">
+                            世界のトレンドをリサーチ
+                        </h4>
+                        <p class="text-[#8B6F47] text-lg">
+                            気になる地域を検索して、人気店舗や話題の商品をチェック。インスピレーションを得ます。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="flex items-start gap-6">
+                    <div class="flex-shrink-0 w-20 h-20 rounded-full bg-gradient-to-br from-[#D4A574] to-[#B88A5A] flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+                        03
+                    </div>
+                    <div class="flex-1">
+                        <h4 class="text-2xl font-bold heading-elegant text-[#4A4A48] mb-3">
+                            レシピをアレンジ
+                        </h4>
+                        <p class="text-[#8B6F47] text-lg">
+                            既存レシピをベースに、AIがあなたのアイデアに合わせたアレンジ案を提案します。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="flex items-start gap-6">
+                    <div class="flex-shrink-0 w-20 h-20 rounded-full bg-gradient-to-br from-[#D4A574] to-[#B88A5A] flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+                        04
+                    </div>
+                    <div class="flex-1">
+                        <h4 class="text-2xl font-bold heading-elegant text-[#4A4A48] mb-3">
+                            新商品開発へ
+                        </h4>
+                        <p class="text-[#8B6F47] text-lg">
+                            生成されたレシピを元に試作・改良。あなたのお店だけのオリジナル商品を開発します。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ログイン/登録セクション -->
+        <section id="loginSection" class="bg-gradient-to-br from-[#F5F3EE] to-[#FFFEF9] py-20">
+            <div class="max-w-md mx-auto px-4">
+                <div class="text-center mb-8">
+                    <h3 class="text-3xl font-bold heading-elegant text-[#4A4A48] mb-4">
+                        今すぐ始める
+                    </h3>
+                    <p class="text-[#8B6F47]">アカウントをお持ちの方はログイン、初めての方は新規登録</p>
+                </div>
+
+                <!-- タブボタン -->
+                <div class="flex gap-2 mb-6">
+                    <button id="loginTab" class="flex-1 py-3 rounded-full font-bold text-white" style="background: linear-gradient(135deg, #B88A5A, #8B6F47);">
+                        <i class="fas fa-sign-in-alt mr-2"></i>ログイン
+                    </button>
+                    <button id="registerTab" class="flex-1 py-3 rounded-full font-bold text-[#8B6F47] bg-white border-2 border-[#E8DCC4]">
+                        <i class="fas fa-user-plus mr-2"></i>新規登録
+                    </button>
+                </div>
 
             <!-- ログインフォーム -->
             <div id="loginForm" class="section-natural rounded-2xl shadow-2xl p-8 animate-scale-in">
@@ -1388,6 +1627,14 @@ app.get('/', (c) => {
 
         <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
         <script>
+            // スムーズスクロール関数
+            function scrollToLogin() {
+                document.getElementById('loginSection').scrollIntoView({ 
+                    behavior: 'smooth',
+                    block: 'center'
+                })
+            }
+
             // タブ切り替え
             const loginTab = document.getElementById('loginTab')
             const registerTab = document.getElementById('registerTab')
