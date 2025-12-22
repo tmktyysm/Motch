@@ -603,10 +603,29 @@ app.post('/api/recipes', async (c) => {
     // 材料を追加
     if (ingredients && Array.isArray(ingredients) && ingredients.length > 0) {
       for (const ing of ingredients) {
+        // 材料名から材料IDを取得または作成
+        let ingredientId = null
+        
+        // 既存の材料を検索
+        const existingIngredient = await env.DB.prepare(
+          'SELECT id FROM ingredients WHERE name = ?'
+        ).bind(ing.name).first()
+        
+        if (existingIngredient) {
+          ingredientId = existingIngredient.id
+        } else {
+          // 新しい材料を作成（デフォルトカテゴリ、価格は0）
+          const newIngResult = await env.DB.prepare(
+            'INSERT INTO ingredients (name, category, unit, price_per_unit) VALUES (?, ?, ?, ?)'
+          ).bind(ing.name, 'その他', ing.unit, 0).run()
+          ingredientId = newIngResult.meta.last_row_id
+        }
+        
+        // レシピと材料の関連を保存
         await env.DB.prepare(`
           INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit)
           VALUES (?, ?, ?, ?)
-        `).bind(recipeId, ing.ingredient_id, ing.quantity, ing.unit).run()
+        `).bind(recipeId, ingredientId, ing.quantity, ing.unit).run()
       }
     }
     
@@ -696,10 +715,29 @@ app.put('/api/recipes/:id', async (c) => {
       
       // 新しい材料を追加
       for (const ing of ingredients) {
+        // 材料名から材料IDを取得または作成
+        let ingredientId = null
+        
+        // 既存の材料を検索
+        const existingIngredient = await env.DB.prepare(
+          'SELECT id FROM ingredients WHERE name = ?'
+        ).bind(ing.name).first()
+        
+        if (existingIngredient) {
+          ingredientId = existingIngredient.id
+        } else {
+          // 新しい材料を作成
+          const newIngResult = await env.DB.prepare(
+            'INSERT INTO ingredients (name, category, unit, price_per_unit) VALUES (?, ?, ?, ?)'
+          ).bind(ing.name, 'その他', ing.unit, 0).run()
+          ingredientId = newIngResult.meta.last_row_id
+        }
+        
+        // レシピと材料の関連を保存
         await env.DB.prepare(`
           INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit)
           VALUES (?, ?, ?, ?)
-        `).bind(recipeId, ing.ingredient_id, ing.quantity, ing.unit).run()
+        `).bind(recipeId, ingredientId, ing.quantity, ing.unit).run()
       }
     }
     

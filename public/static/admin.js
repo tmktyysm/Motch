@@ -162,7 +162,7 @@ async function editRecipe(recipeId) {
     // 材料リストをクリアして再設定
     document.getElementById('ingredientsList').innerHTML = '';
     ingredients.forEach(ing => {
-      addIngredientRow(ing.id, ing.quantity, ing.unit);
+      addIngredientRow(ing.ingredient_id, ing.quantity, ing.unit, ing.name);
     });
     
     // 送信ボタンのテキストを変更
@@ -196,19 +196,17 @@ async function deleteRecipe(recipeId, recipeTitle) {
 }
 
 // 材料行を追加
-function addIngredientRow(ingredientId = '', quantity = '', unit = '') {
+function addIngredientRow(ingredientId = '', quantity = '', unit = '', ingredientName = '') {
   const container = document.getElementById('ingredientsList');
   const index = container.children.length;
   
   const row = document.createElement('div');
   row.className = 'flex gap-2 items-center p-3 bg-[#F5F3EE] rounded-lg';
   row.innerHTML = `
-    <select class="ingredient-select input-natural flex-1" data-index="${index}" required>
-      <option value="">材料を選択</option>
-      ${allIngredients.map(ing => 
-        `<option value="${ing.id}" ${ing.id == ingredientId ? 'selected' : ''}>${ing.name}</option>`
-      ).join('')}
-    </select>
+    <input type="text" class="ingredient-name input-natural flex-1" 
+           placeholder="材料名を入力（例: 強力粉、砂糖、バターなど）" 
+           value="${ingredientName}" 
+           data-index="${index}" required>
     <input type="number" class="ingredient-quantity input-natural w-24" 
            placeholder="数量" step="0.1" value="${quantity}" required>
     <input type="text" class="ingredient-unit input-natural w-20" 
@@ -243,13 +241,13 @@ async function saveRecipe() {
     // 材料データを収集
     const ingredientRows = document.querySelectorAll('#ingredientsList > div');
     ingredientRows.forEach(row => {
-      const ingredientId = row.querySelector('.ingredient-select').value;
+      const ingredientName = row.querySelector('.ingredient-name').value;
       const quantity = parseFloat(row.querySelector('.ingredient-quantity').value);
       const unit = row.querySelector('.ingredient-unit').value;
       
-      if (ingredientId && quantity && unit) {
+      if (ingredientName && quantity && unit) {
         recipeData.ingredients.push({
-          ingredient_id: parseInt(ingredientId),
+          name: ingredientName,
           quantity: quantity,
           unit: unit
         });
