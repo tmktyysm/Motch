@@ -101,16 +101,15 @@ function renderRecipes() {
     
     card.innerHTML = `
       <div class="relative pb-56 overflow-hidden">
-        ${recipe.video_url ? 
-          `<iframe 
-            class="absolute inset-0 w-full h-full"
-            src="${recipe.video_url}" 
-            frameborder="0" 
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-            allowfullscreen
-          ></iframe>` :
+        ${recipe.image_url ? 
+          `<img 
+            src="${recipe.image_url}" 
+            alt="${recipe.title}"
+            class="absolute inset-0 w-full h-full object-cover"
+            onerror="this.src='https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&q=80'"
+          />` :
           `<div class="absolute inset-0 bg-gradient-to-br from-[#D4A574] via-[#B88A5A] to-[#8B6F47] flex items-center justify-center">
-            <i class="fas fa-video text-white text-6xl opacity-50"></i>
+            <i class="fas fa-image text-white text-6xl opacity-50"></i>
           </div>`
         }
         <div class="absolute top-3 right-3 flex gap-2">
@@ -199,15 +198,16 @@ async function showRecipeDetail(recipeId) {
         </div>
         
         <div class="p-6 overflow-y-auto" style="max-height: calc(90vh - 110px);">
-          <!-- 画像 -->
-          ${recipe.image_url ? `
-            <div class="mb-6 rounded-2xl overflow-hidden shadow-lg">
-              <img 
-                src="${recipe.image_url}" 
-                alt="${recipe.title}"
-                class="w-full h-80 object-cover"
-                onerror="this.src='https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&q=80'"
-              />
+          <!-- 動画 -->
+          ${recipe.video_url ? `
+            <div class="mb-6 relative pb-56 rounded-2xl overflow-hidden shadow-lg">
+              <iframe 
+                class="absolute inset-0 w-full h-full"
+                src="${recipe.video_url}" 
+                frameborder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowfullscreen
+              ></iframe>
             </div>
           ` : ''}
           

@@ -1132,25 +1132,25 @@ app.get('/admin', async (c) => {
                                 
                                 <div>
                                     <label class="block text-sm font-semibold text-[#4A4A48] mb-2">
-                                        画像URL <span class="text-[#B88A5A]">（推奨）</span>
+                                        画像URL <span class="text-[#B88A5A]">（カード表示用）</span>
                                     </label>
                                     <input type="url" id="image_url" class="input-natural w-full" 
                                            placeholder="https://images.unsplash.com/photo-xxx">
                                     <p class="text-xs text-[#8B6F47] mt-1">
                                         <i class="fas fa-info-circle mr-1"></i>
-                                        レシピの完成写真URLを入力してください（Unsplashなど）
+                                        レシピカードに表示される画像URL
                                     </p>
                                 </div>
                                 
                                 <div>
                                     <label class="block text-sm font-semibold text-[#4A4A48] mb-2">
-                                        動画URL（オプション）
+                                        動画URL <span class="text-[#B88A5A]">（詳細表示用）</span>
                                     </label>
                                     <input type="url" id="video_url" class="input-natural w-full" 
                                            placeholder="https://www.youtube.com/embed/...">
                                     <p class="text-xs text-[#8B6F47] mt-1">
                                         <i class="fas fa-info-circle mr-1"></i>
-                                        YouTube動画の埋め込みURL（参考用）
+                                        レシピ詳細で表示される動画URL（YouTube埋め込み形式）
                                     </p>
                                 </div>
                             </div>
